@@ -10,6 +10,12 @@ GHAUTO_DIR="${GHAUTO_DIR:-$HOME/.ghauto}"
 GHAUTO_BIN="$GHAUTO_DIR/bin"
 GHAUTO_SRC="$GHAUTO_DIR/src"
 GHAUTO_VENV="$GHAUTO_DIR/venv"
+FORCE="${GHAUTO_FORCE:-false}"
+
+# Allow force flag via environment variable
+if [[ "$1" == "--force" ]]; then
+    FORCE=true
+fi
 
 echo "🚀 Installing ghAuto..."
 
@@ -29,10 +35,22 @@ else
     cd "$GHAUTO_SRC"
 fi
 
-# Create virtual environment
-if [[ ! -d "$GHAUTO_VENV" ]]; then
-    echo "Creating virtual environment..."
+# Create or recreate virtual environment
+if [[ "$FORCE" == "true" ]] || [[ ! -d "$GHAUTO_VENV" ]]; then
+    if [[ -d "$GHAUTO_VENV" ]]; then
+        echo "Recreating virtual environment (--force)..."
+        rm -rf "$GHAUTO_VENV"
+    else
+        echo "Creating virtual environment..."
+    fi
     python3 -m venv "$GHAUTO_VENV"
+else
+    # Check if venv is healthy (has python executable)
+    if [[ ! -x "$GHAUTO_VENV/bin/python" ]]; then
+        echo "Virtual environment appears corrupted, recreating..."
+        rm -rf "$GHAUTO_VENV"
+        python3 -m venv "$GHAUTO_VENV"
+    fi
 fi
 
 # Install dependencies in venv
@@ -48,16 +66,22 @@ EOF
 
 chmod +x "$GHAUTO_BIN/ghauto"
 
-# Add to PATH if not already there
-if [[ ":$PATH:" != *":$GHAUTO_BIN:"* ]]; then
-    shell_config=""
-    if [[ -f "$HOME/.zshrc" ]]; then
-        shell_config="$HOME/.zshrc"
-    elif [[ -f "$HOME/.bashrc" ]]; then
-        shell_config="$HOME/.bashrc"
+# Add to PATH if not already in shell config file
+path_in_config=false
+shell_config=""
+if [[ -f "$HOME/.zshrc" ]]; then
+    shell_config="$HOME/.zshrc"
+elif [[ -f "$HOME/.bashrc" ]]; then
+    shell_config="$HOME/.bashrc"
+fi
+
+if [[ -n "$shell_config" ]]; then
+    # Check if PATH entry already exists in shell config
+    if grep -q "PATH.*\.ghauto/bin" "$shell_config" 2>/dev/null; then
+        path_in_config=true
     fi
     
-    if [[ -n "$shell_config" ]]; then
+    if [[ "$path_in_config" != "true" ]]; then
         echo "" >> "$shell_config"
         echo "# ghAuto" >> "$shell_config"
         echo "export PATH=\"\$HOME/.ghauto/bin:\$PATH\"" >> "$shell_config"
@@ -71,3 +95,5 @@ echo "Next steps:"
 echo "  1. Run: ghauto init  (will auto-detect gh CLI token if authenticated)"
 echo "  2. Run: ghauto analyze"
 echo "  3. Run: ghauto serve"
+echo ""
+echo "Use --force flag to reinstall: curl -fsSL ... | bash --force"

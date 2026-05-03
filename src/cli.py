@@ -1,5 +1,6 @@
 """ghAuto CLI - Command line interface for GitHub repository management."""
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -19,6 +20,9 @@ from gh_cli import (
     ensure_required_scopes,
     recommend_scope_fix,
 )
+
+# Version
+__version__ = "0.1.0"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -340,6 +344,82 @@ def config(
             console.print("[green]✓ Configuration reset[/green]")
         else:
             console.print("[yellow]No configuration to reset[/yellow]")
+
+
+@app.callback(invoke_without_command=True)
+def main_callback(
+    ctx: typer.Context,
+    version: bool = typer.Option(False, "--version", "-v", help="Show version and exit"),
+):
+    """ghAuto - GitHub Repository Management and Analysis Tool."""
+    if version:
+        console.print(f"ghAuto {__version__}")
+        raise typer.Exit()
+    
+    # If no command is provided, show help
+    if ctx.invoked_subcommand is None:
+        console.print(ctx.get_help())
+
+
+@app.command()
+def version():
+    """Show version information."""
+    console.print(f"ghAuto {__version__}")
+
+
+@app.command()
+def update(
+    force: bool = typer.Option(False, "--force", "-f", help="Force reinstall even if up to date"),
+):
+    """Update ghAuto to the latest version."""
+    import shutil
+    
+    console.print(Panel("🔄 Updating ghAuto", style="bold blue"))
+    
+    GHAUTO_SRC = Path.home() / ".ghauto" / "src"
+    
+    if not GHAUTO_SRC.exists() or not (GHAUTO_SRC / ".git").exists():
+        console.print("[yellow]ghAuto not installed via script. Use install script to update.[/yellow]")
+        return
+    
+    try:
+        # Pull latest changes
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=GHAUTO_SRC,
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode != 0:
+            console.print(f"[red]Failed to pull updates:[/red] {result.stderr}")
+            raise typer.Exit(1)
+        
+        if "Already up to date" in result.stdout or "up to date" in result.stdout.lower():
+            console.print("[green]✓ Already up to date[/green]")
+        else:
+            console.print("[green]✓ Updated to latest version[/green]")
+        
+        # Reinstall in case of dependency changes
+        GHAUTO_VENV = Path.home() / ".ghauto" / "venv"
+        if GHAUTO_VENV.exists():
+            pip_path = GHAUTO_VENV / "bin" / "pip"
+            if pip_path.exists():
+                console.print("Reinstalling dependencies...")
+                result = subprocess.run(
+                    [str(pip_path), "install", "-e", str(GHAUTO_SRC), "--quiet"],
+                    capture_output=True
+                )
+                if result.returncode == 0:
+                    console.print("[green]✓ Dependencies updated[/green]")
+                else:
+                    console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
+        
+        console.print("\n[bold]Update complete![/bold]")
+        
+    except subprocess.SubprocessError as e:
+        console.print(f"[red]Update failed:[/red] {e}")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
