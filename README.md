@@ -17,13 +17,11 @@ ghAuto is a comprehensive tool that analyzes your GitHub repositories to identif
 
 ## Quick Start
 
-### Option 1: Using gh CLI (Recommended)
-
-If you have [gh CLI](https://cli.github.com) installed and authenticated:
+### Option 1: One-Line Install (Recommended)
 
 ```bash
-# Install
-pip install ghauto
+# Install via script
+curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/install.sh | bash
 
 # Initialize - will auto-detect your gh CLI token!
 ghauto init
@@ -35,16 +33,34 @@ ghauto analyze
 ghauto serve
 ```
 
-### Option 2: Manual Token Setup
+### Option 2: From Source
 
 ```bash
-# Initialize with explicit token
-ghauto init --token YOUR_GITHUB_TOKEN --username YOUR_USERNAME
+# Clone and install
+git clone https://github.com/bigknoxy/ghAuto.git
+cd ghAuto
+pip install -e .
 
-# Run initial analysis
+# Initialize with explicit token (or use gh CLI token auto-detection)
+ghauto init
+
+# Run analysis
 ghauto analyze
+ghauto serve
+```
 
-# Start the dashboard
+### Option 3: Development Setup
+
+```bash
+# Clone for development
+git clone https://github.com/bigknoxy/ghAuto.git
+cd ghAuto
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Start development servers
 ghauto serve
 ```
 
@@ -162,3 +178,17 @@ MIT License - see [LICENSE](LICENSE) for details.
 - 📧 Issues: [GitHub Issues](https://github.com/bigknoxy/ghAuto/issues)
 - 📖 Documentation: Coming soon
 - 💬 Discussions: [GitHub Discussions](https://github.com/bigknoxy/ghAuto/discussions)
+
+## Uninstall
+
+```bash
+# Run the uninstall script
+curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/uninstall.sh | bash
+```
+
+Or manually:
+```bash
+rm -rf ~/.ghauto
+pip uninstall ghauto
+# Remove PATH entry from ~/.zshrc or ~/.bashrc
+```

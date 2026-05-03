@@ -28,7 +28,7 @@ if [[ -n "$shell_config" && -f "$shell_config" ]]; then
     echo "✓ Cleaned up shell configuration"
 fi
 
-# Uninstall pip package
+# Uninstall pip package (for source installs, this removes the editable install)
 pip uninstall -y ghauto 2>/dev/null || true
 
 echo ""
