@@ -106,3 +106,26 @@ Agents communicate through:
 2. File-based configuration
 3. API endpoints
 4. Event-driven updates
+
+## gh CLI Integration Agent
+
+### Responsibilities
+- Token discovery from gh CLI config (`~/.config/gh/hosts.yml`)
+- Username auto-detection via `gh api user`
+- Token scope validation and recommendations
+- Cross-platform config path resolution (Linux, macOS, Windows)
+
+### Key Files
+- `src/gh_cli.py` - Token discovery and validation
+- `src/github_client/__init__.py` - Token fallback in GitHubClient
+- `src/cli.py` - Integration with init and doctor commands
+
+### Token Priority Order
+1. Explicitly provided token (CLI flag or env var)
+2. gh CLI stored token (if authenticated)
+3. Generated token from environment variable
+
+### Platform Config Paths
+- Linux: `~/.config/gh/hosts.yml`
+- macOS: `~/Library/Application Support/gh/hosts.yml`
+- Windows: `~/AppData/Roaming/gh/hosts.yml`

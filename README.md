@@ -13,14 +13,32 @@ ghAuto is a comprehensive tool that analyzes your GitHub repositories to identif
 - 🌐 **Web Dashboard** - Beautiful React-based UI for monitoring
 - 🔐 **CLI Interface** - Easy-to-use command line tool
 - 🔐 **Authentication** - JWT-based auth with optional admin password protection
+- 🔗 **gh CLI Integration** - Automatically uses your GitHub CLI token
 
 ## Quick Start
+
+### Option 1: Using gh CLI (Recommended)
+
+If you have [gh CLI](https://cli.github.com) installed and authenticated:
 
 ```bash
 # Install
 pip install ghauto
 
-# Initialize configuration
+# Initialize - will auto-detect your gh CLI token!
+ghauto init
+
+# Run initial analysis
+ghauto analyze
+
+# Start the dashboard
+ghauto serve
+```
+
+### Option 2: Manual Token Setup
+
+```bash
+# Initialize with explicit token
 ghauto init --token YOUR_GITHUB_TOKEN --username YOUR_USERNAME
 
 # Run initial analysis
@@ -30,20 +48,45 @@ ghauto analyze
 ghauto serve
 ```
 
-Or one-line install:
-```bash
-curl -fsSL https://raw.githubusercontent.com/ghAuto/install/main/install.sh | bash
-```
-
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `ghauto init` | Initialize configuration and database |
+| `ghauto init` | Initialize configuration and database (auto-detects gh CLI token) |
 | `ghauto analyze` | Run repository analysis |
 | `ghauto serve` | Start API and dashboard servers |
 | `ghauto doctor` | Check system health |
 | `ghauto config` | Manage configuration |
+
+## gh CLI Integration
+
+ghAuto integrates seamlessly with the GitHub CLI (`gh`). If you have `gh` installed and authenticated, ghAuto will automatically:
+
+- ✅ Use your existing GitHub token from `~/.config/gh/hosts.yml`
+- ✅ Detect your username from `gh api user`
+- ✅ Check required token scopes and warn if missing
+
+### Setup gh CLI (if not already done)
+
+```bash
+# Install gh CLI (if needed)
+# macOS: brew install gh
+# Linux: sudo apt install gh
+# Windows: winget install gh
+
+# Authenticate
+gh auth login
+
+# Refresh token with required scopes for ghAuto
+gh auth refresh -s repo,read:org,workflow
+```
+
+### Required Token Scopes
+
+For full functionality, your GitHub token needs these scopes:
+- `repo` - Full control of private repositories
+- `read:org` - Read organization data
+- `workflow` - Update GitHub Actions workflows
 
 ## Dashboard
 

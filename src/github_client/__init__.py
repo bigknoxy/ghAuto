@@ -4,14 +4,42 @@ from typing import Any
 
 import httpx
 
+from gh_cli import get_gh_cli_token, check_gh_cli_auth
+
+
+def get_github_token(token: str | None = None) -> str | None:
+    """Get GitHub token with fallback priority:
+    1. Explicitly provided token
+    2. gh CLI token (if authenticated)
+    3. GITHUB_TOKEN environment variable
+    4. None
+    """
+    if token:
+        return token
+    if check_gh_cli_auth():
+        gh_token = get_gh_cli_token()
+        if gh_token:
+            return gh_token
+    return os.getenv("GITHUB_TOKEN")
+
 
 class GitHubClient:
     """Client for interacting with the GitHub API."""
 
     BASE_URL = "https://api.github.com"
 
-    def __init__(self, token: str | None = None):
-        self.token = token or os.getenv("GITHUB_TOKEN")
+    def __init__(self, token: str | None = None, use_gh_cli: bool = True):
+        """Initialize GitHub client.
+        
+        Args:
+            token: Optional explicit token (bypasses gh CLI)
+            use_gh_cli: Whether to try gh CLI token as fallback
+        """
+        if not use_gh_cli:
+            self.token = token or os.getenv("GITHUB_TOKEN")
+        else:
+            self.token = get_github_token(token)
+        
         self.headers = {
             "Accept": "application/vnd.github.v3+json",
             "X-GitHub-Api-Version": "2022-11-28",

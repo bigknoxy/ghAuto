@@ -3,16 +3,25 @@ import sys
 sys.path.insert(0, 'src')
 
 import pytest
+from unittest.mock import patch, MagicMock
 
-from github_client import GitHubClient
+# Patch gh_cli functions BEFORE importing GitHubClient
+with patch('gh_cli.check_gh_cli_auth', return_value=False):
+    with patch('gh_cli.get_gh_cli_token', return_value=None):
+        with patch('os.getenv', return_value=None):
+            from github_client import GitHubClient
 
 
 @pytest.mark.asyncio
 async def test_github_client_init():
     """Test GitHub client initialization."""
-    client = GitHubClient()
-    assert client.token is None
-    await client.close()
+    with patch('gh_cli.check_gh_cli_auth', return_value=False):
+        with patch('gh_cli.get_gh_cli_token', return_value=None):
+            with patch('os.getenv', return_value=None):
+                from github_client import GitHubClient as GC
+                client = GC(use_gh_cli=False)
+                assert client.token is None
+                await client.close()
 
 
 @pytest.mark.asyncio

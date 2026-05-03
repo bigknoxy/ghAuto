@@ -11,6 +11,14 @@ from rich.panel import Panel
 from db import get_session, init_db
 from scheduler import AnalysisScheduler
 from github_client import GitHubClient
+from gh_cli import (
+    get_gh_cli_token,
+    check_gh_cli_auth,
+    get_gh_cli_username,
+    get_gh_cli_token_with_scope,
+    ensure_required_scopes,
+    recommend_scope_fix,
+)
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -25,13 +33,47 @@ app = typer.Typer(
 
 
 def get_github_token() -> str | None:
-    """Get GitHub token from environment or config."""
-    return os.getenv("GITHUB_TOKEN")
+    """Get GitHub token from environment, config, or gh CLI."""
+    # Check environment first
+    token = os.getenv("GITHUB_TOKEN")
+    if token:
+        return token
+    
+    # Check gh CLI
+    if check_gh_cli_auth():
+        gh_token = get_gh_cli_token()
+        if gh_token:
+            return gh_token
+    
+    # Check config file
+    if CONFIG_FILE.exists():
+        import yaml
+        config = yaml.safe_load(CONFIG_FILE.read_text())
+        return config.get("github", {}).get("token")
+    
+    return None
 
 
 def get_github_username() -> str | None:
-    """Get GitHub username from environment or config."""
-    return os.getenv("GITHUB_USERNAME")
+    """Get GitHub username from environment, config, or gh CLI."""
+    # Check environment first
+    username = os.getenv("GITHUB_USERNAME")
+    if username:
+        return username
+    
+    # Check config file
+    if CONFIG_FILE.exists():
+        import yaml
+        config = yaml.safe_load(CONFIG_FILE.read_text())
+        username = config.get("github", {}).get("username")
+        if username:
+            return username
+    
+    # Check gh CLI
+    if check_gh_cli_auth():
+        return get_gh_cli_username()
+    
+    return None
 
 
 @app.command()
@@ -51,13 +93,27 @@ def init(
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     (CONFIG_DIR / "data").mkdir(parents=True, exist_ok=True)
     
-    # Get token
+    # Check for gh CLI authentication
+    gh_cli_auth = check_gh_cli_auth()
+    if gh_cli_auth:
+        console.print("[green]✓[/green] gh CLI authenticated")
+    
+    # Get token - prioritize gh CLI
     if not token:
-        token = get_github_token()
-        if not token:
+        if gh_cli_auth:
+            token_info = get_gh_cli_token_with_scope()
+            if token_info["token"]:
+                token = token_info["token"]
+                console.print("[green]✓[/green] Using token from gh CLI")
+                if token_info["scopes"]:
+                    scopes_ok = ensure_required_scopes(token_info["scopes"])
+                    if not scopes_ok:
+                        console.print("[yellow]⚠[/yellow] Token may be missing required scopes")
+                        console.print(f"  {recommend_scope_fix()}")
+        else:
             token = typer.prompt("Enter GitHub Personal Access Token", hide_input=True)
     
-    # Get username
+    # Get username - try gh CLI if not provided
     if not username:
         username = get_github_username()
         if not username:
@@ -169,6 +225,21 @@ def doctor():
     table.add_column("Check", style="cyan")
     table.add_column("Status", style="bold")
     
+    # Check gh CLI
+    gh_cli_installed = False
+    gh_cli_auth = False
+    try:
+        import subprocess
+        result = subprocess.run(["gh", "--version"], capture_output=True, timeout=5)
+        gh_cli_installed = result.returncode == 0
+        if gh_cli_installed:
+            gh_cli_auth = check_gh_cli_auth()
+    except Exception:
+        pass
+    
+    table.add_row("gh CLI installed", "[green]✓ Yes[/green]" if gh_cli_installed else "[yellow]✗ No[/yellow]")
+    table.add_row("gh CLI authenticated", "[green]✓ Yes[/green]" if gh_cli_auth else "[red]✗ No[/red]")
+    
     # Check config
     config_ok = CONFIG_FILE.exists()
     table.add_row("Config file", "[green]✓ OK[/green]" if config_ok else "[red]✗ Missing[/red]")
@@ -196,6 +267,12 @@ def doctor():
         console.print(f"\n[bold]Statistics:[/bold]")
         console.print(f"  Repositories tracked: {repo_count}")
         console.print(f"  Findings recorded: {finding_count}")
+    
+    # Show recommendation if gh CLI auth is missing
+    if gh_cli_installed and not gh_cli_auth:
+        console.print("\n[yellow]Recommendation:[/yellow] Run 'gh auth login' to authenticate gh CLI")
+    elif not gh_cli_installed:
+        console.print("\n[yellow]Recommendation:[/yellow] Install gh CLI from https://cli.github.com")
 
 
 @app.command()
