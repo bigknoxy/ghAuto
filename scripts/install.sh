@@ -85,9 +85,11 @@ if [[ -n "$shell_config" ]]; then
         echo "" >> "$shell_config"
         echo "# ghAuto" >> "$shell_config"
         echo "export PATH=\"\$HOME/.ghauto/bin:\$PATH\"" >> "$shell_config"
-        echo "Added to $shell_config - run 'source $shell_config' or restart terminal"
     fi
 fi
+
+# Export PATH for current session so ghauto works immediately
+export PATH="$GHAUTO_BIN:$PATH"
 
 echo "✅ ghAuto installed!"
 echo ""
