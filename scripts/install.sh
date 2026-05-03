@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # ghAuto Install Script
-# One-line install: curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh | bash
+# One-line install with immediate use: eval "$(curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh)"
+# Standard install (requires terminal restart): curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh | bash
 #
 
 set -e
@@ -12,10 +13,13 @@ GHAUTO_SRC="$GHAUTO_DIR/src"
 GHAUTO_VENV="$GHAUTO_DIR/venv"
 FORCE="${GHAUTO_FORCE:-false}"
 
-# Allow force flag via environment variable
+# Allow force flag via environment variable or argument
 if [[ "$1" == "--force" ]]; then
     FORCE=true
 fi
+
+# Output to stderr so eval only captures the PATH export
+exec 1>&2
 
 echo "🚀 Installing ghAuto..."
 
@@ -58,11 +62,13 @@ echo "Installing dependencies..."
 "$GHAUTO_VENV/bin/pip" install -e "$GHAUTO_SRC" --quiet
 
 # Create wrapper script
-cat > "$GHAUTO_BIN/ghauto" << EOF
+cat > "$GHAUTO_BIN/ghauto" << 'WRAPPER'
 #!/bin/bash
+GHAUTO_SRC="${GHAUTO_SRC:-$HOME/.ghauto/src}"
+GHAUTO_VENV="${GHAUTO_VENV:-$HOME/.ghauto/venv}"
 cd "$GHAUTO_SRC"
-exec "$GHAUTO_VENV/bin/python" -m src.cli "\$@"
-EOF
+exec "$GHAUTO_VENV/bin/python" -m src.cli "$@"
+WRAPPER
 
 chmod +x "$GHAUTO_BIN/ghauto"
 
@@ -88,14 +94,13 @@ if [[ -n "$shell_config" ]]; then
     fi
 fi
 
-# Export PATH for current session so ghauto works immediately
-export PATH="$GHAUTO_BIN:$PATH"
-
 echo "✅ ghAuto installed!"
 echo ""
 echo "Next steps:"
-echo "  1. Run: ghauto init  (will auto-detect gh CLI token if authenticated)"
-echo "  2. Run: ghauto analyze"
-echo "  3. Run: ghauto serve"
+echo "  ghauto --version    # Check version"
+echo "  ghauto init         # Initialize configuration"
 echo ""
-echo "Use --force flag to reinstall: curl -fsSL ... | bash --force"
+
+# Restore stdout for the PATH export line only
+exec 1>&1
+echo "export PATH=\"$GHAUTO_BIN:\$PATH\""
