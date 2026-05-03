@@ -70,6 +70,7 @@ ghauto serve
 |---------|-------------|
 | `ghauto init` | Initialize configuration and database (auto-detects gh CLI token) |
 | `ghauto analyze` | Run repository analysis |
+| `ghauto daemon` | Run periodic analysis daemon (--once or --start) |
 | `ghauto serve` | Start API and dashboard servers |
 | `ghauto doctor` | Check system health |
 | `ghauto config` | Manage configuration |

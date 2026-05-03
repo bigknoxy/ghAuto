@@ -187,6 +187,53 @@ def analyze(
 
 
 @app.command()
+def daemon(
+    interval: int = typer.Option(24, "--interval", "-i", help="Analysis interval in hours"),
+    once: bool = typer.Option(False, "--once", help="Run once and exit"),
+    start_daemon: bool = typer.Option(False, "--start", help="Start background daemon"),
+):
+    """Run repository analysis daemon for periodic checks."""
+    import asyncio
+    
+    token = get_github_token()
+    user = get_github_username()
+    
+    if not token:
+        console.print("[red]Error:[/red] No GitHub token available. Run 'ghauto init' first.")
+        raise typer.Exit(1)
+    
+    if not user:
+        console.print("[red]Error:[/red] No GitHub username configured. Run 'ghauto init' first.")
+        raise typer.Exit(1)
+    
+    console.print(Panel(f"🤖 ghAuto Daemon for {user}", style="bold blue"))
+    
+    scheduler = AnalysisScheduler(github_token=token, db_path=str(DB_FILE))
+    
+    if once:
+        # Run once and exit
+        asyncio.run(scheduler.run_once(user))
+        console.print("[green]✓[/green] One-time analysis complete")
+    elif start_daemon:
+        # Start background daemon
+        scheduler.run_once(user)  # Initial run
+        scheduler.start(user, interval_hours=interval)
+        
+        console.print(f"[green]✓[/green] Daemon started with {interval}h interval")
+        console.print("[green]✓[/green] Initial analysis complete")
+        console.print("\nPress Ctrl+C to stop")
+        
+        try:
+            asyncio.get_event_loop().run_forever()
+        except KeyboardInterrupt:
+            scheduler.stop()
+            console.print("\n[yellow]Daemon stopped[/yellow]")
+    else:
+        # Default: run once with option to start daemon
+        console.print("Use --once to run once, or --start to start daemon")
+
+
+@app.command()
 def serve(
     host: str = typer.Option("0.0.0.0", "--host", "-h"),
     port: int = typer.Option(8000, "--port", "-p"),
