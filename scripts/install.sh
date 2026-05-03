@@ -9,6 +9,7 @@ set -e
 GHAUTO_DIR="${GHAUTO_DIR:-$HOME/.ghauto}"
 GHAUTO_BIN="$GHAUTO_DIR/bin"
 GHAUTO_SRC="$GHAUTO_DIR/src"
+GHAUTO_VENV="$GHAUTO_DIR/venv"
 
 echo "🚀 Installing ghAuto..."
 
@@ -28,19 +29,21 @@ else
     cd "$GHAUTO_SRC"
 fi
 
-# Install dependencies
-if command -v pip &> /dev/null; then
-    pip install -e "$GHAUTO_SRC" --quiet
-else
-    echo "Python pip not found. Please install Python 3.10+ and pip."
-    exit 1
+# Create virtual environment
+if [[ ! -d "$GHAUTO_VENV" ]]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$GHAUTO_VENV"
 fi
+
+# Install dependencies in venv
+echo "Installing dependencies..."
+"$GHAUTO_VENV/bin/pip" install -e "$GHAUTO_SRC" --quiet
 
 # Create wrapper script
 cat > "$GHAUTO_BIN/ghauto" << EOF
 #!/bin/bash
 cd "$GHAUTO_SRC"
-exec python3 -m src.cli "\$@"
+exec "$GHAUTO_VENV/bin/python" -m src.cli "\$@"
 EOF
 
 chmod +x "$GHAUTO_BIN/ghauto"

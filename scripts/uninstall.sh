@@ -33,4 +33,5 @@ pip uninstall -y ghauto 2>/dev/null || true
 
 echo ""
 echo "✅ ghAuto uninstalled!"
+echo "Note: Virtual environment at ~/.ghauto/venv was removed automatically"
 echo "Run: source $shell_config (or restart terminal) to refresh PATH"
