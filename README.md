@@ -21,7 +21,7 @@ ghAuto is a comprehensive tool that analyzes your GitHub repositories to identif
 
 ```bash
 # Install via script
-curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh | bash
 
 # Initialize - will auto-detect your gh CLI token!
 ghauto init

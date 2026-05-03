@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # ghAuto Uninstall Script
+# One-line uninstall: curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/uninstall.sh | bash
 #
 
 GHAUTO_DIR="${GHAUTO_DIR:-$HOME/.ghauto}"
