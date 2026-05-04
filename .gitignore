@@ -36,3 +36,10 @@ Thumbs.db
 # Config (keep template)
 config.yaml
 !.config.yaml.example
+
+# Build metadata
+*.egg-info/
+.eggs/
+*.egg
+dist/
+build/
