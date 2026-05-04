@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 class AnalysisScheduler:
     """Schedules and runs periodic repository analysis."""
 
-    def __init__(self, github_token: str | None = None, db_path: str = "data/ghauto.db"):
+    def __init__(self, github_token: str | None = None, db_path: str | None = None):
         self.github_token = github_token
-        self.db_path = db_path
+        self.db_path = db_path  # If None, get_session() will use default ~/.ghauto/data/ghauto.db
         self.scheduler = AsyncIOScheduler()
         self._running = False
 

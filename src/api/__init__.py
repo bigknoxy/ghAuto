@@ -18,6 +18,8 @@ from db import (
 
 app = FastAPI(title="ghAuto API", version="0.1.0")
 
+# Database path - defaults to ~/.ghauto/data/ghauto.db in db.py
+
 # Enable CORS for dashboard
 app.add_middleware(
     CORSMiddleware,

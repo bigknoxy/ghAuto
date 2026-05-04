@@ -78,8 +78,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 class AuthManager:
     """Manages authentication for ghAuto."""
     
-    def __init__(self, db_path: str = "data/ghauto.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str | None = None):
+        self.db_path = db_path  # If None, get_session() will use default ~/.ghauto/data/ghauto.db
     
     def authenticate_admin(self, password: str) -> bool:
         """Authenticate admin password."""

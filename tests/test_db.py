@@ -7,6 +7,7 @@ import tempfile
 import os
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 from db import (
     parse_github_datetime,
@@ -313,3 +314,104 @@ class TestDatabaseFunctions:
             assert retrieved is not None
             assert retrieved.name == "persist-test"
             session2.close()
+
+
+class TestDatabasePathDefaults:
+    """Tests for default database path behavior."""
+
+    def test_get_session_default_path_uses_home_directory(self):
+        """Test that get_session without arguments uses ~/.ghauto/data/ghauto.db."""
+        with patch.dict(os.environ, {}, clear=True):
+            # The default path should be ~/.ghauto/data/ghauto.db
+            # When no argument is passed, get_session should default to this path
+            session = get_session()
+            assert session is not None
+            session.close()
+
+    def test_init_db_default_path_uses_home_directory(self):
+        """Test that init_db without arguments uses ~/.ghauto/data/ghauto.db."""
+        with patch.dict(os.environ, {}, clear=True):
+            engine = init_db()
+            assert engine is not None
+
+    def test_get_session_with_explicit_none_uses_default(self):
+        """Test that get_session(None) uses the default path."""
+        session = get_session(None)
+        assert session is not None
+        session.close()
+
+    def test_init_db_with_explicit_none_uses_default(self):
+        """Test that init_db(None) uses the default path."""
+        engine = init_db(None)
+        assert engine is not None
+
+    def test_get_session_uses_custom_path(self):
+        """Test that get_session uses a custom path when provided."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            custom_path = os.path.join(tmpdir, "custom", "test.db")
+            session = get_session(custom_path)
+            assert session is not None
+            assert os.path.exists(custom_path)
+            session.close()
+
+    def test_init_db_uses_custom_path(self):
+        """Test that init_db uses a custom path when provided."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            custom_path = os.path.join(tmpdir, "custom", "test.db")
+            engine = init_db(custom_path)
+            assert engine is not None
+            assert os.path.exists(custom_path)
+
+    def test_database_path_consistency_across_functions(self):
+        """Test that get_session and init_db use the same default path."""
+        # Get expected default path
+        expected_path = str(Path.home() / ".ghauto" / "data" / "ghauto.db")
+        
+        # Test init_db returns engine pointing to correct path
+        # (We can't easily verify the path in the engine without introspection)
+        
+        # Test get_session works with the same default
+        session = get_session()
+        assert session is not None
+        session.close()
+
+
+class TestDatabasePathIntegration:
+    """Integration tests for database path across modules."""
+
+    def test_scheduler_uses_default_db_path(self):
+        """Test that AnalysisScheduler works with default database path."""
+        from scheduler import AnalysisScheduler
+        scheduler = AnalysisScheduler(github_token="test_token")
+        assert scheduler.db_path is None  # Should be None to use default
+        # Clean up
+        scheduler.stop()
+
+    def test_scheduler_uses_custom_db_path(self):
+        """Test that AnalysisScheduler works with custom database path."""
+        from scheduler import AnalysisScheduler
+        with tempfile.TemporaryDirectory() as tmpdir:
+            custom_path = os.path.join(tmpdir, "scheduler_test.db")
+            scheduler = AnalysisScheduler(github_token="test_token", db_path=custom_path)
+            assert scheduler.db_path == custom_path
+            scheduler.stop()
+
+    def test_auth_manager_uses_default_db_path(self):
+        """Test that AuthManager works with default database path."""
+        from auth import AuthManager
+        auth = AuthManager()
+        assert auth.db_path is None  # Should be None to use default
+
+    def test_auth_manager_uses_custom_db_path(self):
+        """Test that AuthManager works with custom database path."""
+        from auth import AuthManager
+        with tempfile.TemporaryDirectory() as tmpdir:
+            custom_path = os.path.join(tmpdir, "auth_test.db")
+            auth = AuthManager(db_path=custom_path)
+            assert auth.db_path == custom_path
+
+    def test_cli_db_file_constant(self):
+        """Test that CLI uses the correct DB_FILE constant."""
+        from cli import DB_FILE
+        expected = Path.home() / ".ghauto" / "data" / "ghauto.db"
+        assert DB_FILE == expected

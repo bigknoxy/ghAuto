@@ -158,8 +158,10 @@ class Config(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
-def get_session(db_path: str = "data/ghauto.db"):
+def get_session(db_path: str | None = None):
     """Get a database session."""
+    if db_path is None:
+        db_path = str(Path.home() / ".ghauto" / "data" / "ghauto.db")
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(f"sqlite:///{db_path}")
     Base.metadata.create_all(engine)
@@ -167,8 +169,10 @@ def get_session(db_path: str = "data/ghauto.db"):
     return Session()
 
 
-def init_db(db_path: str = "data/ghauto.db"):
+def init_db(db_path: str | None = None):
     """Initialize the database."""
+    if db_path is None:
+        db_path = str(Path.home() / ".ghauto" / "data" / "ghauto.db")
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(f"sqlite:///{db_path}")
     Base.metadata.create_all(engine)
