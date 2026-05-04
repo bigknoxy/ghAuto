@@ -1,8 +1,9 @@
 Metadata-Version: 2.4
 Name: ghauto
-Version: 0.1.0
+Version: 0.2.4
 Summary: GitHub Repository Management and Analysis Tool
 Requires-Python: >=3.10
+License-File: LICENSE
 Requires-Dist: httpx>=0.24.0
 Requires-Dist: pydantic>=2.0.0
 Requires-Dist: apscheduler>=3.10.0
@@ -10,8 +11,15 @@ Requires-Dist: fastapi>=0.100.0
 Requires-Dist: uvicorn>=0.23.0
 Requires-Dist: sqlalchemy>=2.0.0
 Requires-Dist: pyyaml>=6.0
+Requires-Dist: typer>=0.12.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyjwt>=2.8.0
+Requires-Dist: passlib>=1.7.0
+Requires-Dist: cryptography>=42.0.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"
 Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
 Requires-Dist: ruff>=0.0.280; extra == "dev"
 Requires-Dist: mypy>=1.5.0; extra == "dev"
+Dynamic: license-file
