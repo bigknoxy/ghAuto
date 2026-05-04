@@ -19,6 +19,25 @@ from sqlalchemy.orm import sessionmaker
 Base = declarative_base()
 
 
+def parse_github_datetime(date_str: str | None) -> datetime | None:
+    """Parse GitHub API datetime string to Python datetime.
+    
+    GitHub returns dates in ISO 8601 format (e.g., '2025-10-09T19:21:45Z').
+    SQLAlchemy DateTime columns require Python datetime objects.
+    """
+    if not date_str:
+        return None
+    # Handle both 'Z' suffix and '+00:00' format
+    if date_str.endswith('Z'):
+        date_str = date_str[:-1] + '+00:00'
+    try:
+        parsed = datetime.fromisoformat(date_str)
+        # Convert to naive UTC datetime for SQLite compatibility
+        return parsed.replace(tzinfo=None)
+    except (ValueError, TypeError):
+        return None
+
+
 class Repository(Base):
     """GitHub repository information."""
 

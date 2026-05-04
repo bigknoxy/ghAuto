@@ -68,3 +68,38 @@ async def test_github_client_nested_context_managers():
     
     # Both should be closed now
     assert client1.client.is_closed
+
+
+# Tests for datetime parsing helper
+def test_parse_github_datetime_with_z_suffix():
+    """Test parsing GitHub datetime with Z suffix."""
+    from db import parse_github_datetime
+    result = parse_github_datetime("2025-10-09T19:21:45Z")
+    assert result is not None
+    assert result.year == 2025
+    assert result.month == 10
+    assert result.day == 9
+    assert result.hour == 19
+    assert result.minute == 21
+    assert result.second == 45
+
+
+def test_parse_github_datetime_with_timezone():
+    """Test parsing GitHub datetime with timezone offset."""
+    from db import parse_github_datetime
+    result = parse_github_datetime("2025-10-09T19:21:45+00:00")
+    assert result is not None
+    assert result.year == 2025
+    assert result.month == 10
+
+
+def test_parse_github_datetime_none():
+    """Test parsing None returns None."""
+    from db import parse_github_datetime
+    assert parse_github_datetime(None) is None
+
+
+def test_parse_github_datetime_invalid():
+    """Test parsing invalid string returns None."""
+    from db import parse_github_datetime
+    assert parse_github_datetime("invalid-date") is None

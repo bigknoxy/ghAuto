@@ -8,9 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from analyzer import RepositoryAnalyzer
 from github_client import GitHubClient
-from db import Finding, Opportunity, Repository, ScheduledRun, get_session
-
-logger = logging.getLogger(__name__)
+from db import Finding, Opportunity, Repository, ScheduledRun, get_session, parse_github_datetime
 
 
 class AnalysisScheduler:
@@ -66,8 +64,8 @@ class AnalysisScheduler:
                                 stars=repo_data.get("stargazers_count", 0),
                                 forks=repo_data.get("forks_count", 0),
                                 open_issues=repo_data.get("open_issues_count", 0),
-                                created_at=repo_data.get("created_at"),
-                                updated_at=repo_data.get("updated_at"),
+                                created_at=parse_github_datetime(repo_data.get("created_at")),
+                                updated_at=parse_github_datetime(repo_data.get("updated_at")),
                                 private=repo_data.get("private", False),
                                 html_url=repo_data.get("html_url"),
                             )
@@ -76,7 +74,7 @@ class AnalysisScheduler:
                             repo.stars = repo_data.get("stargazers_count", 0)
                             repo.forks = repo_data.get("forks_count", 0)
                             repo.open_issues = repo_data.get("open_issues_count", 0)
-                            repo.updated_at = repo_data.get("updated_at")
+                            repo.updated_at = parse_github_datetime(repo_data.get("updated_at"))
 
                         session.commit()
 

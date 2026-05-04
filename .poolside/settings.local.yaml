@@ -1,0 +1,39 @@
+tools:
+    shell:
+        allow:
+            - git status
+            - git add *
+            - git commit *
+            - git push origin *
+            - git log *
+            - curl *
+            - head *
+            - cd *
+            - python *
+            - python3 *
+            - . *
+            - pip install *
+            - tail *
+            - echo *
+            - bash *
+            - ls *
+            - git checkout *
+            - git push *
+            - git merge *
+            - git branch *
+            - git diff *
+            - git fetch *
+            - git merge-base *
+            - git reset *
+            - git remote show *
+            - grep *
+            - wget *
+            - which bash
+            - pwd
+            - git status *
+            - /usr/bin/git status
+            - mkdir *
+paths:
+    allow:
+        - path: /root/code/ghAuto/**
+          write: true
