@@ -282,13 +282,26 @@ def serve(
             # Check if npm is available
             npm_check = subprocess.run(["npm", "--version"], capture_output=True)
             if npm_check.returncode == 0:
+                # Check if node_modules exists
+                node_modules = dashboard_path / "node_modules"
+                if not node_modules.exists():
+                    console.print("[yellow]Note:[/yellow] Installing dashboard dependencies (npm install)...")
+                    subprocess.run(
+                        ["npm", "install"],
+                        cwd=dashboard_path,
+                        capture_output=True
+                    )
+                
                 console.print(f"[green]✓[/green] Starting dashboard on port {dashboard_actual_port}")
-                # Start dashboard in background
+                console.print(f"[blue]Dashboard URL:[/blue] http://localhost:{dashboard_actual_port}")
+                # Start dashboard with API_PORT env var so proxy works correctly
+                env = os.environ.copy()
+                env["API_PORT"] = str(api_port)
+                # Start dashboard in background with visible output
                 dashboard_process = subprocess.Popen(
                     ["npm", "run", "dev", "--", "--port", str(dashboard_actual_port)],
                     cwd=dashboard_path,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    env=env
                 )
             else:
                 console.print("[yellow]Note:[/yellow] npm not found, skipping dashboard")
