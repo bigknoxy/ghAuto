@@ -10,6 +10,8 @@ from analyzer import RepositoryAnalyzer
 from github_client import GitHubClient
 from db import Finding, Opportunity, Repository, ScheduledRun, get_session, parse_github_datetime
 
+logger = logging.getLogger(__name__)
+
 
 class AnalysisScheduler:
     """Schedules and runs periodic repository analysis."""
@@ -99,7 +101,7 @@ class AnalysisScheduler:
 
                 # Find opportunities across repositories
                 db_repos = session.query(Repository).all()
-                opportunities = await analyzer.find_opportunities(db_repos)
+                opportunities = analyzer.find_opportunities(db_repos)
 
                 for opp in opportunities:
                     opportunity = Opportunity(
