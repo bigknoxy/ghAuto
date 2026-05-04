@@ -23,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.15"
+__version__ = "0.2.16"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -515,7 +515,8 @@ def update(
                         console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
             
             # Fix dashboard: ensure correct package manager dependencies
-            dashboard_path = GHAUTO_SRC.parent.parent / "dashboard"
+            # Use same path calculation as serve command
+            dashboard_path = Path(__file__).parent.parent / "dashboard"
             if dashboard_path.exists() and (dashboard_path / "package.json").exists():
                 # Check available package managers (prefer bun > npm)
                 has_bun = subprocess.run(["bun", "--version"], capture_output=True).returncode == 0
