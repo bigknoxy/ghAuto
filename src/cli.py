@@ -1,5 +1,6 @@
 """ghAuto CLI - Command line interface for GitHub repository management."""
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -22,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.14"
+__version__ = "0.2.15"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -513,17 +514,35 @@ def update(
                     else:
                         console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
             
-            # Fix dashboard: if bun is available, ensure bun-compatible dependencies
+            # Fix dashboard: ensure correct package manager dependencies
             dashboard_path = GHAUTO_SRC.parent.parent / "dashboard"
-            if dashboard_path.exists():
-                # Check if bun is available and has no bun.lock
-                bun_check = subprocess.run(["bun", "--version"], capture_output=True)
-                has_bun = bun_check.returncode == 0
-                has_bun_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
+            if dashboard_path.exists() and (dashboard_path / "package.json").exists():
+                # Check available package managers (prefer bun > npm)
+                has_bun = subprocess.run(["bun", "--version"], capture_output=True).returncode == 0
+                has_npm = subprocess.run(["npm", "--version"], capture_output=True).returncode == 0
                 
-                if has_bun and not has_bun_lock and (dashboard_path / "node_modules").exists():
-                    console.print("Fixing dashboard dependencies for bun...")
-                    subprocess.run(["bun", "install"], cwd=dashboard_path, capture_output=True)
+                # Determine which package manager to use
+                if has_bun:
+                    pm = "bun"
+                    needs_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
+                    needs_nm = (dashboard_path / "node_modules").exists()
+                    
+                    # Bun requires bun.lock - if missing, clean and reinstall
+                    if not needs_lock:
+                        console.print("Fixing dashboard: installing with bun...")
+                        if needs_nm:
+                            shutil.rmtree(dashboard_path / "node_modules")
+                        subprocess.run(["bun", "install"], cwd=dashboard_path, capture_output=True)
+                        
+                elif has_npm:
+                    pm = "npm"
+                    needs_nm = (dashboard_path / "node_modules").exists()
+                    
+                    if not needs_nm:
+                        console.print("Fixing dashboard: installing with npm...")
+                        subprocess.run(["npm", "install"], cwd=dashboard_path, capture_output=True)
+                else:
+                    console.print("[yellow]Warning: Neither bun nor npm found for dashboard[/yellow]")
             
             console.print("\n[bold]Update complete![/bold]")
             console.print(f"[bold]Current version:[/bold] ghAuto {__version__}")
