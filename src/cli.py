@@ -295,8 +295,10 @@ def serve(
             if package_manager:
                 # Check if dependencies are installed
                 if package_manager == "bun":
-                    # Check for bun.lockb or node_modules for bun
-                    has_deps = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "node_modules").exists()
+                    # Check for bun.lockb or bun.lock (newer bun versions)
+                    has_deps = (dashboard_path / "bun.lockb").exists() or \
+                               (dashboard_path / "bun.lock").exists() or \
+                               (dashboard_path / "node_modules").exists()
                 else:
                     has_deps = (dashboard_path / "node_modules").exists()
                 
