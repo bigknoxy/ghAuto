@@ -1,4 +1,0 @@
-analyzer
-api
-github_client
-scheduler

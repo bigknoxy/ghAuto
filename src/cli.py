@@ -411,15 +411,21 @@ def update(
     force: bool = typer.Option(False, "--force", "-f", help="Force reinstall even if up to date"),
 ):
     """Update ghAuto to the latest version."""
-    import shutil
     
     console.print(Panel("🔄 Updating ghAuto", style="bold blue"))
     
     GHAUTO_SRC = Path.home() / ".ghauto" / "src"
     
-    # Try the old script-based update first
+    # Try script-based update first (for development installs)
     if GHAUTO_SRC.exists() and (GHAUTO_SRC / ".git").exists():
         try:
+            # Clean up egg-info files that shouldn't be tracked
+            subprocess.run(
+                ["git", "clean", "-fd", ".egg-info"],
+                cwd=GHAUTO_SRC,
+                capture_output=True
+            )
+            
             # Pull latest changes
             result = subprocess.run(
                 ["git", "pull"],
@@ -429,15 +435,22 @@ def update(
             )
             
             if result.returncode != 0:
-                console.print(f"[red]Failed to pull updates:[/red] {result.stderr}")
-                raise typer.Exit(1)
+                console.print(f"[yellow]Git pull issue:[/yellow] {result.stderr[:80] if result.stderr else 'unknown'}")
+                console.print("[yellow]Trying to fix...[/yellow]")
+                # Reset and clean
+                subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=GHAUTO_SRC, capture_output=True)
+                subprocess.run(["git", "clean", "-fd"], cwd=GHAUTO_SRC, capture_output=True)
+                result = subprocess.run(["git", "pull"], cwd=GHAUTO_SRC, capture_output=True, text=True)
+                if result.returncode != 0:
+                    console.print("[yellow]Git update failed, using pip instead[/yellow]")
+                    return _pip_update()
             
             if "Already up to date" in result.stdout or "up to date" in result.stdout.lower():
                 console.print("[green]✓ Already up to date[/green]")
             else:
                 console.print("[green]✓ Updated to latest version[/green]")
             
-            # Reinstall in case of dependency changes
+            # Reinstall
             GHAUTO_VENV = Path.home() / ".ghauto" / "venv"
             if GHAUTO_VENV.exists():
                 pip_path = GHAUTO_VENV / "bin" / "pip"
@@ -460,10 +473,14 @@ def update(
             console.print(f"[red]Update failed:[/red] {e}")
             raise typer.Exit(1)
     
-    # Fall back to pip update for non-script installations
-    console.print("[yellow]Note:[/yellow] Using pip to update from PyPI")
+    # Fall back to pip update
+    _pip_update()
+
+
+def _pip_update():
+    """Helper function to update via pip."""
     try:
-        # First try to update from the current editable source
+        console.print("[yellow]Note:[/yellow] Using pip to update")
         result = subprocess.run(
             ["pip", "install", "--upgrade", "--break-system-packages", "ghauto"],
             capture_output=True,
@@ -473,8 +490,8 @@ def update(
         if result.returncode == 0:
             console.print("[green]✓ Updated via pip[/green]")
         else:
-            # If that fails, try from the local source
-            console.print("Trying local source update...")
+            # Try local install
+            console.print("Trying local source...")
             result = subprocess.run(
                 ["pip", "install", "-e", "/root/code/ghAuto", "--break-system-packages", "--quiet"],
                 capture_output=True,
@@ -483,7 +500,7 @@ def update(
             if result.returncode == 0:
                 console.print("[green]✓ Updated from local source[/green]")
             else:
-                console.print(f"[yellow]Warning:[/yellow] {result.stderr}")
+                console.print(f"[yellow]Warning:[/yellow] {result.stderr[:100] if result.stderr else 'unknown error'}")
         
         console.print("\n[bold]Update complete![/bold]")
         console.print(f"[bold]Current version:[/bold] ghAuto {__version__}")
