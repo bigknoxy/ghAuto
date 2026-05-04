@@ -22,7 +22,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.10"
+__version__ = "0.2.11"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
