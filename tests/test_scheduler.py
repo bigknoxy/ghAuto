@@ -86,7 +86,7 @@ class TestAnalysisScheduler:
                 mock_analyzer = MagicMock()
                 mock_analyzer_class.return_value = mock_analyzer
                 mock_analyzer.analyze_repository = AsyncMock(return_value=(mock_analysis, mock_findings))
-                mock_analyzer.find_opportunities.return_value = []  # Not async, just return value
+                mock_analyzer.find_opportunities = AsyncMock(return_value=[])
                 
                 await scheduler.run_analysis_job("testuser")
 
@@ -137,7 +137,7 @@ class TestAnalysisScheduler:
                 mock_analyzer = MagicMock()
                 mock_analyzer_class.return_value = mock_analyzer
                 mock_analyzer.analyze_repository = AsyncMock(return_value=(Analysis(repository_id=1), []))
-                mock_analyzer.find_opportunities.return_value = []
+                mock_analyzer.find_opportunities = AsyncMock(return_value=[])
                 
                 await scheduler.run_analysis_job("testuser")
 

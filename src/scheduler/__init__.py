@@ -101,7 +101,7 @@ class AnalysisScheduler:
 
                 # Find opportunities across repositories
                 db_repos = session.query(Repository).all()
-                opportunities = analyzer.find_opportunities(db_repos)
+                opportunities = await analyzer.find_opportunities(db_repos)
 
                 for opp in opportunities:
                     opportunity = Opportunity(
