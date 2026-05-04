@@ -78,10 +78,12 @@ class TestCliUpdate:
     """Tests for update command."""
 
     def test_update_no_install(self):
-        """Test update when ghAuto not installed via script."""
+        """Test update when ghAuto not installed via script - falls back to pip."""
         with patch('pathlib.Path.exists', return_value=False):
             result = runner.invoke(app, ["update"])
-            assert "not installed via script" in result.output
+            # Now falls back to pip update instead of showing error
+            assert "Update complete" in result.output
+            assert "Current version" in result.output
 
     def test_update_help(self):
         """Test update command help."""
