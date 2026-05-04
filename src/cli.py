@@ -273,21 +273,37 @@ def serve(
     
     console.print(f"[green]✓[/green] Starting API server on {host}:{api_port}")
     
-    # Start dashboard if npm is available
+    # Start dashboard if bun or npm is available (prefer bun)
     dashboard_path = Path(__file__).parent.parent / "dashboard"
     dashboard_process = None
     
     if dashboard_path.exists():
         try:
-            # Check if npm is available
-            npm_check = subprocess.run(["npm", "--version"], capture_output=True)
-            if npm_check.returncode == 0:
-                # Check if node_modules exists
-                node_modules = dashboard_path / "node_modules"
-                if not node_modules.exists():
-                    console.print("[yellow]Note:[/yellow] Installing dashboard dependencies (npm install)...")
+            # Check for bun first (preferred), then npm
+            package_manager = None
+            bun_check = subprocess.run(["bun", "--version"], capture_output=True)
+            if bun_check.returncode == 0:
+                package_manager = "bun"
+                console.print("[green]✓[/green] Using bun for dashboard")
+            else:
+                npm_check = subprocess.run(["npm", "--version"], capture_output=True)
+                if npm_check.returncode == 0:
+                    package_manager = "npm"
+                else:
+                    console.print("[yellow]Note:[/yellow] Neither bun nor npm found, skipping dashboard")
+            
+            if package_manager:
+                # Check if dependencies are installed
+                if package_manager == "bun":
+                    # Check for bun.lockb or node_modules for bun
+                    has_deps = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "node_modules").exists()
+                else:
+                    has_deps = (dashboard_path / "node_modules").exists()
+                
+                if not has_deps:
+                    console.print(f"[yellow]Note:[/yellow] Installing dashboard dependencies ({package_manager})...")
                     subprocess.run(
-                        ["npm", "install"],
+                        [package_manager, "install"],
                         cwd=dashboard_path,
                         capture_output=True
                     )
@@ -299,12 +315,10 @@ def serve(
                 env["API_PORT"] = str(api_port)
                 # Start dashboard in background with visible output
                 dashboard_process = subprocess.Popen(
-                    ["npm", "run", "dev", "--", "--port", str(dashboard_actual_port)],
+                    [package_manager, "run", "dev", "--", "--port", str(dashboard_actual_port)],
                     cwd=dashboard_path,
                     env=env
                 )
-            else:
-                console.print("[yellow]Note:[/yellow] npm not found, skipping dashboard")
         except Exception as e:
             console.print(f"[yellow]Note:[/yellow] Could not start dashboard: {e}")
     
