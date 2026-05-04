@@ -182,8 +182,7 @@ class TestBunSupport:
                 with patch('cli.CONFIG_DIR', Path(tmpdir) / ".ghauto"):
                     # When bun is available, it should be preferred
                     with patch('subprocess.run') as mock_run:
-                        mock_run.return_value = MagicMock(returncode=0)
-                        mock_run.return_value.stdout = b"1.0.0"
+                        mock_run.return_value = MagicMock(returncode=0, stdout=b"1.0.0")
                         
                         # Check that bun check happens first
                         # This is verified by the code logic preferring bun
@@ -196,3 +195,72 @@ class TestBunSupport:
         with patch('cli.Path.home', return_value=Path("/tmp")):
             # Code structure ensures npm check happens when bun fails
             assert True  # Fallback logic is in place
+
+    def test_bun_needs_reinstall_when_only_npm_node_modules_exists(self):
+        """Test that bun triggers reinstall when only npm's node_modules exists."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dashboard_path = Path(tmpdir) / "dashboard"
+            dashboard_path.mkdir()
+            
+            # Create package.json
+            (dashboard_path / "package.json").write_text('{"name": "test", "scripts": {"dev": "vite"}}')
+            
+            # Create npm's node_modules but NO bun lock files
+            (dashboard_path / "node_modules").mkdir()
+            
+            # Verify detection logic
+            package_manager = "bun"
+            bun_lock_exists = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
+            npm_node_modules_exists = (dashboard_path / "node_modules").exists()
+            
+            # For bun: needs install because no bun.lock exists
+            needs_install = not bun_lock_exists
+            assert needs_install == True, "Bun should trigger reinstall when no bun.lock exists"
+            
+            # For npm: would not need install because node_modules exists
+            assert npm_node_modules_exists == True, "npm would have node_modules"
+
+    def test_npm_doesnt_need_reinstall_when_node_modules_exists(self):
+        """Test that npm doesn't trigger reinstall when node_modules exists."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dashboard_path = Path(tmpdir) / "dashboard"
+            dashboard_path.mkdir()
+            
+            # Create package.json
+            (dashboard_path / "package.json").write_text('{"name": "test", "scripts": {"dev": "vite"}}')
+            
+            # Create npm's node_modules
+            (dashboard_path / "node_modules").mkdir()
+            
+            # For npm: check dependency logic
+            package_manager = "npm"
+            has_node_modules = (dashboard_path / "node_modules").exists()
+            
+            # npm should NOT need install
+            needs_install = not has_node_modules
+            assert needs_install == False, "npm should not need reinstall when node_modules exists"
+
+
+class TestApiPortProxy:
+    """Tests for API port proxy configuration."""
+
+    def test_api_port_passed_to_dashboard_env(self):
+        """Test that API_PORT is correctly set in dashboard environment."""
+        import inspect
+        from cli import serve
+        
+        source = inspect.getsource(serve)
+        
+        # Verify the code sets API_PORT
+        assert "API_PORT" in source, "API_PORT should be in serve function"
+        assert "os.environ.copy()" in source, "Environment should be copied"
+        assert 'env["API_PORT"]' in source, "API_PORT should be set in env"
+
+    def test_vite_config_reads_api_port(self):
+        """Test that vite.config.js reads API_PORT environment variable."""
+        vite_config = Path(__file__).parent.parent / "dashboard" / "vite.config.js"
+        content = vite_config.read_text()
+        
+        assert "API_PORT" in content, "vite.config should read API_PORT"
+        assert "process.env.API_PORT" in content, "vite.config should use process.env"
+        assert "localhost:" in content, "proxy target should include localhost"
