@@ -1,5 +1,8 @@
 # ghAuto 🚀
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+
 > GitHub Repository Management and Analysis Tool
 
 ghAuto is a comprehensive tool that analyzes your GitHub repositories to identify improvements, detect opportunities for new features, and provide actionable insights. It runs periodic checks and provides a dashboard for monitoring.
@@ -7,12 +10,13 @@ ghAuto is a comprehensive tool that analyzes your GitHub repositories to identif
 ## Features
 
 - 🔍 **Repository Analysis** - Automated checks for README quality, CI/CD configuration, tests, and dependencies
+- 🔐 **Security Checks** - Dependabot alerts, secret scanning workflows, and security findings
+- 📋 **Documentation Analysis** - LICENSE, CONTRIBUTING, and CODE_OF_CONDUCT detection
 - 📊 **Health Scoring** - Each repository gets a health score based on best practices
 - 💡 **Opportunity Detection** - Identifies gaps for new features and applications
 - ⏱️ **Scheduled Analysis** - Runs periodic checks (configurable interval)
 - 🌐 **Web Dashboard** - Beautiful React-based UI for monitoring
 - 🔐 **CLI Interface** - Easy-to-use command line tool
-- 🔐 **Authentication** - JWT-based auth with optional admin password protection
 - 🔗 **gh CLI Integration** - Automatically uses your GitHub CLI token
 
 ## Quick Start
@@ -20,8 +24,11 @@ ghAuto is a comprehensive tool that analyzes your GitHub repositories to identif
 ### Option 1: One-Line Install (Recommended)
 
 ```bash
-# Install via script (for immediate use, use eval)
-eval "$(curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh)"
+# Install via script
+curl -fsSL https://raw.githubusercontent.com/bigknoxy/ghAuto/main/scripts/install.sh | bash
+
+# Reload your shell (or restart terminal)
+source ~/.bashrc  # or source ~/.zshrc
 
 # Initialize - will auto-detect your gh CLI token!
 ghauto init
@@ -137,6 +144,8 @@ dashboard:
 - ✅ Test files and configuration
 - ✅ Dependencies and outdated packages
 - ✅ Code quality patterns
+- ✅ Security configuration (Dependabot, secret scanning)
+- ✅ Documentation files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT)
 
 ## What It Suggests
 

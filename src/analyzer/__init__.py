@@ -73,6 +73,40 @@ class RepositoryAnalyzer:
         analysis.dependencies = dep_result["dependencies"]
         analysis.outdated_dependencies = dep_result["outdated"]
 
+        # Check documentation files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT)
+        doc_result = await self._check_documentation(owner, name)
+        analysis.has_license = doc_result["has_license"]
+        analysis.has_contributing = doc_result["has_contributing"]
+        analysis.has_code_of_conduct = doc_result["has_code_of_conduct"]
+        
+        for missing in doc_result["missing"]:
+            findings.append(Finding(
+                repository_id=repo["id"],
+                analysis_id=0,
+                category="improvement",
+                severity="low",
+                title=f"Missing {missing}",
+                description=f"Repository is missing a {missing} file.",
+                recommendation=f"Add a {missing} file to improve project documentation and community guidelines.",
+            ))
+
+        # Check security features (dependabot, secret scanning)
+        sec_result = await self._check_security(owner, name)
+        analysis.has_dependabot = sec_result["has_dependabot"]
+        analysis.has_secret_scanning = sec_result["has_secret_scanning"]
+        analysis.security_findings = sec_result["findings"]
+        
+        if not sec_result["has_dependabot"]:
+            findings.append(Finding(
+                repository_id=repo["id"],
+                analysis_id=0,
+                category="improvement",
+                severity="medium",
+                title="No Dependabot configuration",
+                description="Repository does not have Dependabot alerts enabled.",
+                recommendation="Enable Dependabot in your repository settings or add a dependabot.yml file.",
+            ))
+
         # Calculate health score
         if not analysis.has_readme:
             analysis.health_score -= 20
@@ -82,10 +116,16 @@ class RepositoryAnalyzer:
             analysis.health_score -= 15
         if dep_result["outdated"]:
             analysis.health_score -= len(dep_result["outdated"]) * 2
+        if not analysis.has_license:
+            analysis.health_score -= 5
+        if not analysis.has_dependabot:
+            analysis.health_score -= 5
 
         analysis.analysis_data["readme"] = readme_result
         analysis.analysis_data["ci"] = ci_result
         analysis.analysis_data["dependencies"] = dep_result
+        analysis.analysis_data["documentation"] = doc_result
+        analysis.analysis_data["security"] = sec_result
 
         return analysis, findings
 
@@ -210,6 +250,87 @@ class RepositoryAnalyzer:
             pass
 
         return {"dependencies": dependencies, "outdated": outdated}
+
+    async def _check_documentation(self, owner: str, repo: str) -> dict[str, Any]:
+        """Check for documentation files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT)."""
+        doc_files = {
+            "LICENSE": "has_license",
+            "LICENSE.md": "has_license",
+            "LICENSE.txt": "has_license",
+            "CONTRIBUTING.md": "has_contributing",
+            "CONTRIBUTING": "has_contributing",
+            "CODE_OF_CONDUCT.md": "has_code_of_conduct",
+            "CODE_OF_CONDUCT": "has_code_of_conduct",
+        }
+        
+        has_license = False
+        has_contributing = False
+        has_code_of_conduct = False
+        missing = []
+        
+        try:
+            contents = await self.client.get_repository_contents(owner, repo)
+            file_names = [f["name"] for f in contents]
+            
+            for doc_file, attr in doc_files.items():
+                if doc_file in file_names:
+                    if attr == "has_license":
+                        has_license = True
+                    elif attr == "has_contributing":
+                        has_contributing = True
+                    elif attr == "has_code_of_conduct":
+                        has_code_of_conduct = True
+        except Exception:
+            pass
+        
+        if not has_license:
+            missing.append("LICENSE")
+        if not has_contributing:
+            missing.append("CONTRIBUTING.md")
+        if not has_code_of_conduct:
+            missing.append("CODE_OF_CONDUCT.md")
+        
+        return {
+            "has_license": has_license,
+            "has_contributing": has_contributing,
+            "has_code_of_conduct": has_code_of_conduct,
+            "missing": missing,
+        }
+
+    async def _check_security(self, owner: str, repo: str) -> dict[str, Any]:
+        """Check for security configuration (dependabot, secret scanning)."""
+        has_dependabot = False
+        has_secret_scanning = False
+        findings = []
+        
+        try:
+            contents = await self.client.get_repository_contents(owner, repo)
+            file_names = [f["name"] for f in contents]
+            
+            # Check for .github/dependabot.yml
+            if ".github" in file_names:
+                try:
+                    dg_contents = await self.client.get_repository_contents(owner, repo, ".github")
+                    dg_files = [f["name"] for f in dg_contents]
+                    if "dependabot.yml" in dg_files or "dependabot.yaml" in dg_files:
+                        has_dependabot = True
+                except Exception:
+                    pass
+            
+            # Note: Secret scanning is enabled at repo level, not file-based
+            # We can detect if there's a secret-scanning-related workflow
+            for f in contents:
+                if "secret" in f["name"].lower() and (f["name"].endswith(".yml") or f["name"].endswith(".yaml")):
+                    has_secret_scanning = True
+                    
+        except Exception:
+            pass
+        
+        return {
+            "has_dependabot": has_dependabot,
+            "has_secret_scanning": has_secret_scanning,
+            "findings": findings,
+        }
 
     def _find_outdated_deps(self, filename: str, content: bytes) -> list[dict]:
         """Simple check for potentially outdated dependencies."""

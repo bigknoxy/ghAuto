@@ -49,6 +49,7 @@ class Analysis(Base):
     id = Column(Integer, primary_key=True)
     repository_id = Column(Integer, nullable=False)
     analyzed_at = Column(DateTime, default=datetime.utcnow)
+    last_analyzed = Column(DateTime, default=datetime.utcnow)
 
     # Health score (0-100)
     health_score = Column(Float, default=0.0)
@@ -67,6 +68,16 @@ class Analysis(Base):
 
     # Code quality metrics
     code_quality_issues = Column(JSON, default=[])
+
+    # Security analysis
+    has_dependabot = Column(Boolean, default=False)
+    has_secret_scanning = Column(Boolean, default=False)
+    security_findings = Column(JSON, default=[])
+
+    # Documentation analysis
+    has_license = Column(Boolean, default=False)
+    has_contributing = Column(Boolean, default=False)
+    has_code_of_conduct = Column(Boolean, default=False)
 
     # Raw analysis data
     analysis_data = Column(JSON, default={})
