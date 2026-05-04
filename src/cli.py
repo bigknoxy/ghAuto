@@ -247,24 +247,63 @@ def serve(
     import subprocess
     import threading
     import time
+    import socket
+    
+    def find_available_port(start_port: int, max_attempts: int = 100) -> int:
+        """Find an available port starting from start_port."""
+        for port in range(start_port, start_port + max_attempts):
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.bind(('', port))
+                    return port
+            except OSError:
+                continue
+        return start_port  # Return original if none available
     
     console.print(Panel("🌐 Starting ghAuto servers", style="bold blue"))
     
-    # Start API server
-    console.print(f"[green]✓[/green] Starting API server on {host}:{port}")
+    # Find available ports
+    api_port = find_available_port(port)
+    if api_port != port:
+        console.print(f"[yellow]Note:[/yellow] Port {port} in use, using {api_port}")
+    
+    dashboard_actual_port = find_available_port(dashboard_port)
+    if dashboard_actual_port != dashboard_port:
+        console.print(f"[yellow]Note:[/yellow] Dashboard port {dashboard_port} in use, using {dashboard_actual_port}")
+    
+    console.print(f"[green]✓[/green] Starting API server on {host}:{api_port}")
     
     # Start dashboard if npm is available
     dashboard_path = Path(__file__).parent.parent / "dashboard"
+    dashboard_process = None
+    
     if dashboard_path.exists():
-        console.print(f"[green]✓[/green] Starting dashboard on port {dashboard_port}")
+        try:
+            # Check if npm is available
+            npm_check = subprocess.run(["npm", "--version"], capture_output=True)
+            if npm_check.returncode == 0:
+                console.print(f"[green]✓[/green] Starting dashboard on port {dashboard_actual_port}")
+                # Start dashboard in background
+                dashboard_process = subprocess.Popen(
+                    ["npm", "run", "dev", "--", "--port", str(dashboard_actual_port)],
+                    cwd=dashboard_path,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+            else:
+                console.print("[yellow]Note:[/yellow] npm not found, skipping dashboard")
+        except Exception as e:
+            console.print(f"[yellow]Note:[/yellow] Could not start dashboard: {e}")
     
     console.print("\nPress Ctrl+C to stop")
     
     try:
         import uvicorn
-        uvicorn.run("api:app", host=host, port=port)
+        uvicorn.run("api:app", host=host, port=api_port)
     except KeyboardInterrupt:
         console.print("\n[yellow]Shutting down...[/yellow]")
+        if dashboard_process:
+            dashboard_process.terminate()
 
 
 @app.command()
@@ -416,6 +455,7 @@ def update(
                     console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
         
         console.print("\n[bold]Update complete![/bold]")
+        console.print(f"[bold]Current version:[/bold] ghAuto {__version__}")
         
     except subprocess.SubprocessError as e:
         console.print(f"[red]Update failed:[/red] {e}")
