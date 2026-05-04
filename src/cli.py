@@ -419,9 +419,22 @@ def update(
     # Try script-based update first (for development installs)
     if GHAUTO_SRC.exists() and (GHAUTO_SRC / ".git").exists():
         try:
-            # Clean up egg-info files that shouldn't be tracked
+            # First, remove any .egg-info directories that block git pull
+            import shutil
+            for egg_info in GHAUTO_SRC.glob("*.egg-info"):
+                console.print(f"[yellow]Removing[/yellow] {egg_info.name}...")
+                shutil.rmtree(egg_info)
+            
+            # Also clean untracked files
             subprocess.run(
                 ["git", "clean", "-fd", ".egg-info"],
+                cwd=GHAUTO_SRC,
+                capture_output=True
+            )
+            
+            # Reset any uncommitted changes
+            subprocess.run(
+                ["git", "reset", "--hard", "HEAD"],
                 cwd=GHAUTO_SRC,
                 capture_output=True
             )
@@ -436,10 +449,10 @@ def update(
             
             if result.returncode != 0:
                 console.print(f"[yellow]Git pull issue:[/yellow] {result.stderr[:80] if result.stderr else 'unknown'}")
-                console.print("[yellow]Trying to fix...[/yellow]")
-                # Reset and clean
+                console.print("[yellow]Trying alternative approach...[/yellow]")
+                # Hard reset everything including untracked
                 subprocess.run(["git", "reset", "--hard", "HEAD"], cwd=GHAUTO_SRC, capture_output=True)
-                subprocess.run(["git", "clean", "-fd"], cwd=GHAUTO_SRC, capture_output=True)
+                subprocess.run(["git", "clean", "-fdx"], cwd=GHAUTO_SRC, capture_output=True)
                 result = subprocess.run(["git", "pull"], cwd=GHAUTO_SRC, capture_output=True, text=True)
                 if result.returncode != 0:
                     console.print("[yellow]Git update failed, using pip instead[/yellow]")
