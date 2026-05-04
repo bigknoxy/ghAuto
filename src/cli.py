@@ -293,22 +293,26 @@ def serve(
                     console.print("[yellow]Note:[/yellow] Neither bun nor npm found, skipping dashboard")
             
             if package_manager:
-                # Check if dependencies are installed
+                # Check if dependencies are installed for the specific package manager
                 if package_manager == "bun":
-                    # Check for bun.lockb or bun.lock (newer bun versions)
-                    has_deps = (dashboard_path / "bun.lockb").exists() or \
-                               (dashboard_path / "bun.lock").exists() or \
-                               (dashboard_path / "node_modules").exists()
+                    # Bun needs bun.lockb or bun.lock - npm's node_modules won't work
+                    needs_install = not ((dashboard_path / "bun.lockb").exists() or 
+                                         (dashboard_path / "bun.lock").exists())
                 else:
-                    has_deps = (dashboard_path / "node_modules").exists()
+                    # npm needs node_modules
+                    needs_install = not (dashboard_path / "node_modules").exists()
                 
-                if not has_deps:
+                if needs_install:
                     console.print(f"[yellow]Note:[/yellow] Installing dashboard dependencies ({package_manager})...")
-                    subprocess.run(
+                    result = subprocess.run(
                         [package_manager, "install"],
                         cwd=dashboard_path,
                         capture_output=True
                     )
+                    if result.returncode != 0:
+                        console.print(f"[yellow]Warning:[/yellow] Dashboard dependency install failed")
+                    else:
+                        console.print(f"[green]✓[/green] Dashboard dependencies installed")
                 
                 console.print(f"[green]✓[/green] Starting dashboard on port {dashboard_actual_port}")
                 console.print(f"[blue]Dashboard URL:[/blue] http://localhost:{dashboard_actual_port}")
