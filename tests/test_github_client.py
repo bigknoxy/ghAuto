@@ -31,3 +31,11 @@ async def test_github_client_with_token():
     assert client.token == "test_token"
     assert "Bearer test_token" in client.headers["Authorization"]
     await client.close()
+
+
+@pytest.mark.asyncio
+async def test_github_client_async_context_manager():
+    """Test GitHub client as async context manager."""
+    async with GitHubClient(token="test_token") as client:
+        assert client.token == "test_token"
+        assert "Bearer test_token" in client.headers["Authorization"]
