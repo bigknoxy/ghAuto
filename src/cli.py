@@ -23,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.20"
+__version__ = "0.2.21"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -674,6 +674,39 @@ def _pip_update():
     except subprocess.SubprocessError as e:
         console.print(f"[red]Update failed:[/red] {e}")
         raise typer.Exit(1)
+
+
+@app.command()
+def improve(
+    repo: str = typer.Argument(None, help="Repository to improve (owner/name format)"),
+    ai: bool = typer.Option(False, "--ai", help="Use AI for enhanced suggestions"),
+):
+    """
+    Automatically improve repository based on analysis findings.
+    
+    Creates a PR with improvements like README, LICENSE, CI workflows.
+    """
+    from improve import RepoImprover, HeuristicProvider
+    
+    console.print(Panel("🔧 Improving repository", style="bold blue"))
+    
+    # Get GitHub token
+    token = get_github_token()
+    if not token:
+        console.print("[red]Error:[/red] No GitHub token found")
+        raise typer.Exit(1)
+    
+    # Initialize improver
+    improver = RepoImprover(ai_provider=HeuristicProvider())
+    
+    # Run improvement
+    async def run_improve():
+        target_repo = repo or typer.prompt("Repository (owner/name)")
+        result = await improver.improve_repo(target_repo, use_ai=ai)
+        console.print(f"\n[green]✓[/green] Analysis complete for {target_repo}")
+        console.print(result.get("improvements", "No improvements suggested"))
+    
+    asyncio.run(run_improve())
 
 
 if __name__ == "__main__":
