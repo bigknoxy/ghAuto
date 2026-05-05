@@ -23,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.17"
+__version__ = "0.2.18"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -335,11 +335,12 @@ def serve(
             if package_manager:
                 # Check if dependencies are installed for the specific package manager
                 if package_manager == "bun":
-                    # Bun requires bun.lockb or bun.lock - npm's node_modules is incompatible!
+                    # Bun requires BOTH bun.lock AND node_modules - npm's node_modules is incompatible!
                     # Even if vite binary exists from npm install, it won't work with bun
                     has_bun_lock = (dashboard_path / "bun.lockb").exists() or \
                                     (dashboard_path / "bun.lock").exists()
-                    needs_install = not has_bun_lock
+                    has_node_modules = (dashboard_path / "node_modules").exists()
+                    needs_install = not has_bun_lock or not has_node_modules
                 else:
                     # npm needs node_modules
                     needs_install = not (dashboard_path / "node_modules").exists()
@@ -550,6 +551,14 @@ def update(
                     )
                     if result.returncode == 0:
                         console.print("[green]✓ Dependencies updated[/green]")
+                        # Read fresh version from disk after update
+                        version_file = GHAUTO_SRC / "src" / "cli.py"
+                        if version_file.exists():
+                            content = version_file.read_text()
+                            for line in content.split('\n'):
+                                if '__version__' in line:
+                                    exec(line, globals())
+                                    break
                     else:
                         console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
             
@@ -596,20 +605,22 @@ def update(
                 
                 if has_bun:
                     pm = "bun"
-                    needs_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
-                    needs_nm = (dashboard_path / "node_modules").exists()
+                    has_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
+                    has_nm = (dashboard_path / "node_modules").exists()
                     
-                    if not needs_lock:
+                    # Need BOTH lock file AND node_modules for bun to work
+                    if not has_lock or not has_nm:
                         console.print("Fixing dashboard: installing with bun...")
-                        if needs_nm:
+                        if has_nm and not has_lock:
+                            # If node_modules exists but no lock, clean it
                             shutil.rmtree(dashboard_path / "node_modules")
                         subprocess.run(["bun", "install"], cwd=dashboard_path, capture_output=True)
                         
                 elif has_npm:
                     pm = "npm"
-                    needs_nm = (dashboard_path / "node_modules").exists()
+                    needs_nm = not (dashboard_path / "node_modules").exists()
                     
-                    if not needs_nm:
+                    if needs_nm:
                         console.print("Fixing dashboard: installing with npm...")
                         subprocess.run(["npm", "install"], cwd=dashboard_path, capture_output=True)
                 else:
