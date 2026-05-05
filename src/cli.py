@@ -23,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.16"
+__version__ = "0.2.17"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -275,10 +275,49 @@ def serve(
     console.print(f"[green]✓[/green] Starting API server on {host}:{api_port}")
     
     # Start dashboard if bun or npm is available (prefer bun)
-    dashboard_path = Path(__file__).parent.parent / "dashboard"
+    # Check multiple possible locations for dashboard
+    module_dir = Path(__file__).resolve().parent  # src/
+    repo_dashboard = module_dir.parent / "dashboard"  # /dashboard next to src/
+    home_dashboard = Path.home() / ".ghauto" / "dashboard"
+    
+    dashboard_path = None
+    if repo_dashboard.exists():
+        dashboard_path = repo_dashboard
+    elif home_dashboard.exists():
+        dashboard_path = home_dashboard
+    
     dashboard_process = None
     
-    if dashboard_path.exists():
+    # If dashboard not found, try to set it up
+    if not dashboard_path:
+        console.print("[yellow]Note:[/yellow] Dashboard not found locally, downloading...")
+        try:
+            import urllib.request
+            import io
+            import zipfile
+            
+            # Download dashboard from GitHub
+            zip_url = "https://github.com/bigknoxy/ghAuto/archive/refs/heads/main.zip"
+            with urllib.request.urlopen(zip_url) as response:
+                with zipfile.ZipFile(io.BytesIO(response.read())) as zip_ref:
+                    # Extract dashboard folder
+                    home_dashboard.parent.mkdir(parents=True, exist_ok=True)
+                    for member in zip_ref.namelist():
+                        if member.startswith('ghAuto-main/dashboard/'):
+                            zip_ref.extract(member, home_dashboard.parent)
+            
+            # Rename extracted folder
+            extracted = home_dashboard.parent / "ghAuto-main" / "dashboard"
+            if extracted.exists():
+                if home_dashboard.exists():
+                    shutil.rmtree(home_dashboard)
+                shutil.move(str(extracted), str(home_dashboard))
+                dashboard_path = home_dashboard
+                console.print("[green]✓[/green] Dashboard downloaded successfully")
+        except Exception as e:
+            console.print(f"[yellow]Note:[/yellow] Could not download dashboard: {e}")
+    
+    if dashboard_path and dashboard_path.exists():
         try:
             # Check for bun first (preferred), then npm
             package_manager = None
@@ -515,20 +554,51 @@ def update(
                         console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
             
             # Fix dashboard: ensure correct package manager dependencies
-            # Use same path calculation as serve command
-            dashboard_path = Path(__file__).parent.parent / "dashboard"
-            if dashboard_path.exists() and (dashboard_path / "package.json").exists():
-                # Check available package managers (prefer bun > npm)
+            # Check multiple possible locations for dashboard
+            module_dir = Path(__file__).resolve().parent
+            repo_dashboard = module_dir.parent / "dashboard"
+            home_dashboard = Path.home() / ".ghauto" / "dashboard"
+            
+            dashboard_path = None
+            if repo_dashboard.exists():
+                dashboard_path = repo_dashboard
+            elif home_dashboard.exists():
+                dashboard_path = home_dashboard
+            
+            # If dashboard not found, try to download it
+            if not dashboard_path:
+                console.print("Downloading dashboard...")
+                try:
+                    import urllib.request
+                    import io
+                    import zipfile
+                    
+                    zip_url = "https://github.com/bigknoxy/ghAuto/archive/refs/heads/main.zip"
+                    with urllib.request.urlopen(zip_url) as response:
+                        with zipfile.ZipFile(io.BytesIO(response.read())) as zip_ref:
+                            home_dashboard.parent.mkdir(parents=True, exist_ok=True)
+                            for member in zip_ref.namelist():
+                                if member.startswith('ghAuto-main/dashboard/'):
+                                    zip_ref.extract(member, home_dashboard.parent)
+                    
+                    extracted = home_dashboard.parent / "ghAuto-main" / "dashboard"
+                    if extracted.exists():
+                        if home_dashboard.exists():
+                            shutil.rmtree(home_dashboard)
+                        shutil.move(str(extracted), str(home_dashboard))
+                        dashboard_path = home_dashboard
+                except Exception as e:
+                    console.print(f"[yellow]Warning: Could not download dashboard: {e}[/yellow]")
+            
+            if dashboard_path and dashboard_path.exists() and (dashboard_path / "package.json").exists():
                 has_bun = subprocess.run(["bun", "--version"], capture_output=True).returncode == 0
                 has_npm = subprocess.run(["npm", "--version"], capture_output=True).returncode == 0
                 
-                # Determine which package manager to use
                 if has_bun:
                     pm = "bun"
                     needs_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
                     needs_nm = (dashboard_path / "node_modules").exists()
                     
-                    # Bun requires bun.lock - if missing, clean and reinstall
                     if not needs_lock:
                         console.print("Fixing dashboard: installing with bun...")
                         if needs_nm:

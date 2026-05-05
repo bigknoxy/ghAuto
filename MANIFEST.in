@@ -1,0 +1,3 @@
+include dashboard/**
+include dashboard/*
+recursive-include dashboard *
