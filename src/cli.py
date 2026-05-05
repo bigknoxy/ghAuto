@@ -23,7 +23,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.18"
+__version__ = "0.2.19"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -551,13 +551,17 @@ def update(
                     )
                     if result.returncode == 0:
                         console.print("[green]✓ Dependencies updated[/green]")
-                        # Read fresh version from disk after update
+                        # Read version directly from updated file
                         version_file = GHAUTO_SRC / "src" / "cli.py"
                         if version_file.exists():
                             content = version_file.read_text()
                             for line in content.split('\n'):
                                 if '__version__' in line:
-                                    exec(line, globals())
+                                    # Direct parsing: __version__ = "x.y.z"
+                                    parts = line.split('=')
+                                    if len(parts) >= 2:
+                                        version_str = parts[1].strip().strip('"').strip("'")
+                                        globals()['__version__'] = version_str
                                     break
                     else:
                         console.print("[yellow]Warning: Failed to update dependencies[/yellow]")
