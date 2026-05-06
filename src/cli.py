@@ -1,4 +1,5 @@
 """ghAuto CLI - Command line interface for GitHub repository management."""
+import asyncio
 import os
 import shutil
 import subprocess
@@ -23,7 +24,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.21"
+__version__ = "0.2.22"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
