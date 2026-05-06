@@ -24,7 +24,7 @@ from gh_cli import (
 )
 
 # Version
-__version__ = "0.2.22"
+__version__ = "0.2.23"
 
 # Configuration directory
 CONFIG_DIR = Path.home() / ".ghauto"
@@ -687,7 +687,7 @@ def improve(
     
     Creates a PR with improvements like README, LICENSE, CI workflows.
     """
-    from improve import RepoImprover, HeuristicProvider
+    from improve import RepoImprover, HeuristicProvider, OpenRouterProvider
     
     console.print(Panel("🔧 Improving repository", style="bold blue"))
     
@@ -697,8 +697,18 @@ def improve(
         console.print("[red]Error:[/red] No GitHub token found")
         raise typer.Exit(1)
     
+    # Select AI provider based on flag
+    ai_provider = HeuristicProvider()
+    if ai:
+        openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        if openrouter_key:
+            ai_provider = OpenRouterProvider(api_key=openrouter_key)
+            console.print("[green]AI enhancement enabled[/green]")
+        else:
+            console.print("[yellow]Warning:[/yellow] --ai flag set but OPENROUTER_API_KEY not found, using heuristics")
+    
     # Initialize improver
-    improver = RepoImprover(ai_provider=HeuristicProvider())
+    improver = RepoImprover(ai_provider=ai_provider)
     
     # Run improvement
     async def run_improve():

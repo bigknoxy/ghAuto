@@ -1,12 +1,12 @@
-"""Repository improvement system with AI and heuristic providers."""
 import asyncio
+import os
 from typing import Optional
 
 
 class AIProvider:
     """Base class for AI providers."""
     
-    async def complete(self, prompt: str, **kwargs) -> str:
+    async def complete(self, repo: str, findings: dict) -> str:
         """Generate completion for a prompt."""
         raise NotImplementedError
 
@@ -99,9 +99,12 @@ class RepoImprover:
         findings = await self._get_findings(repo)
         
         # Generate improvements
-        if use_ai and isinstance(self.ai, AIProvider):
-            improvements = await self.ai.complete(repo, findings)
+        if use_ai and isinstance(self.ai, OpenRouterProvider):
+            # Use AI-enhanced suggestions
+            prompt = f"Analyze repository {repo} and suggest improvements. Current findings: {findings}"
+            improvements = await self.ai.complete(prompt=prompt)
         else:
+            # Use heuristic-based suggestions
             improvements = await self._generate_heuristic_fixes(repo, findings)
         
         # In real implementation, would create PR here
