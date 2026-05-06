@@ -67,23 +67,29 @@ class OpenRouterProvider(AIProvider):
     
     async def complete(self, prompt: str, **kwargs) -> str:
         """Call OpenRouter API for enhanced suggestions."""
-        # Placeholder - would implement actual API call
-        import aiohttp
+        try:
+            import aiohttp
+        except ImportError:
+            # Fall back to heuristic suggestions if aiohttp not available
+            return "AI enhancement requested but aiohttp not installed. Install with: pip install aiohttp"
         
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}]
-                }
-            ) as response:
-                data = await response.json()
-                return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": prompt}]
+                    }
+                ) as response:
+                    data = await response.json()
+                    return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        except Exception as e:
+            return f"Error calling OpenRouter API: {e}"
 
 
 class RepoImprover:
