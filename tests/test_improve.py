@@ -100,6 +100,17 @@ class TestImproveCommand:
         assert provider is not None
         assert hasattr(provider, 'complete')
 
+    @pytest.mark.asyncio
+    async def test_openrouter_provider_handles_missing_aiohttp(self):
+        """Test that OpenRouter provider handles missing aiohttp gracefully."""
+        from improve import OpenRouterProvider
+        
+        provider = OpenRouterProvider(api_key="test-key")
+        # This should return an error message, not crash
+        result = await provider.complete(prompt="test prompt")
+        
+        assert "aiohttp not installed" in result or "Error" in result
+
     def test_improve_command_ai_flag_works(self):
         """Test that improve command handles --ai flag."""
         from cli import app
