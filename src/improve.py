@@ -108,6 +108,11 @@ class RepoImprover:
             # Use AI-enhanced suggestions
             prompt = f"Analyze repository {repo} and suggest improvements. Current findings: {findings}"
             improvements = await self.ai.complete(prompt=prompt)
+            # Fall back to heuristic if AI returns empty/dud response
+            if not improvements or improvements.startswith("Error") or "not installed" in improvements:
+                # Create a new heuristic provider for fallback
+                heuristic = HeuristicProvider()
+                improvements = await heuristic.complete(repo, findings)
         else:
             # Use heuristic-based suggestions
             improvements = await self._generate_heuristic_fixes(repo, findings)
@@ -130,6 +135,7 @@ class RepoImprover:
     
     async def _generate_heuristic_fixes(self, repo: str, findings: dict) -> str:
         """Generate fixes using heuristic provider."""
-        if isinstance(self.ai, HeuristicProvider):
-            return await self.ai.complete(repo, findings)
-        return "No improvements generated."
+        # Always use HeuristicProvider for fallback, regardless of current ai_provider
+        from improve import HeuristicProvider
+        heuristic = HeuristicProvider()
+        return await heuristic.complete(repo, findings)

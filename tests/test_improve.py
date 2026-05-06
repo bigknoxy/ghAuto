@@ -114,6 +114,19 @@ class TestImproveCommand:
         # Should handle errors gracefully - either returns error message or makes API call
         assert result is not None
 
+    @pytest.mark.asyncio
+    async def test_improve_repo_falls_back_on_ai_error(self):
+        """Test that improve_repo falls back to heuristic when AI fails."""
+        from improve import RepoImprover, HeuristicProvider, OpenRouterProvider
+        
+        # Test with AI that will fail (no aiohttp)
+        improver = RepoImprover(ai_provider=OpenRouterProvider(api_key="test-key"))
+        result = await improver.improve_repo("testorg/testrepo", use_ai=True)
+        
+        # Should still have improvements (fallback to heuristic)
+        assert result["improvements"] is not None
+        assert "README" in result["improvements"]  # From heuristic fallback
+
     def test_improve_command_ai_flag_works(self):
         """Test that improve command handles --ai flag."""
         from cli import app
