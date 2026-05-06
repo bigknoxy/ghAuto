@@ -136,6 +136,5 @@ class RepoImprover:
     async def _generate_heuristic_fixes(self, repo: str, findings: dict) -> str:
         """Generate fixes using heuristic provider."""
         # Always use HeuristicProvider for fallback, regardless of current ai_provider
-        from improve import HeuristicProvider
         heuristic = HeuristicProvider()
         return await heuristic.complete(repo, findings)

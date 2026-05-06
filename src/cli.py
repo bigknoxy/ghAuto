@@ -646,6 +646,7 @@ def update(
 
 def _pip_update():
     """Helper function to update via pip."""
+    GHAUTO_SRC = Path.home() / ".ghauto" / "src"
     try:
         console.print("[yellow]Note:[/yellow] Using pip to update")
         result = subprocess.run(
@@ -660,7 +661,7 @@ def _pip_update():
             # Try local install
             console.print("Trying local source...")
             result = subprocess.run(
-                ["pip", "install", "-e", "/root/code/ghAuto", "--break-system-packages", "--quiet"],
+                ["pip", "install", "-e", str(GHAUTO_SRC), "--break-system-packages", "--quiet"],
                 capture_output=True,
                 text=True
             )
