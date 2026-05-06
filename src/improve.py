@@ -70,8 +70,7 @@ class OpenRouterProvider(AIProvider):
         try:
             import aiohttp
         except ImportError:
-            # Fall back to heuristic suggestions if aiohttp not available
-            return "AI enhancement requested but aiohttp not installed. Install with: pip install aiohttp"
+            return "AI enhancement requested but aiohttp not installed. Run 'ghauto update' to install all dependencies."
         
         try:
             async with aiohttp.ClientSession() as session:
