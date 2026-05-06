@@ -99,3 +99,16 @@ class TestImproveCommand:
         provider = OpenRouterProvider(api_key="test-key")
         assert provider is not None
         assert hasattr(provider, 'complete')
+
+    def test_improve_command_ai_flag_works(self):
+        """Test that improve command handles --ai flag."""
+        from cli import app
+        from typer.testing import CliRunner
+        
+        runner = CliRunner()
+        # Test that --ai flag is accepted
+        result = runner.invoke(app, ["improve", "--ai", "--help"])
+        
+        assert result.exit_code == 0
+        # The help should show the --ai option
+        assert "--ai" in result.output
