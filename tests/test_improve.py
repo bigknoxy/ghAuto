@@ -1,6 +1,5 @@
 """Tests for the improve command."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, MagicMock
 
 
 class TestImproveCommand:
@@ -117,7 +116,7 @@ class TestImproveCommand:
     @pytest.mark.asyncio
     async def test_improve_repo_falls_back_on_ai_error(self):
         """Test that improve_repo falls back to heuristic when AI fails."""
-        from improve import RepoImprover, HeuristicProvider, OpenRouterProvider
+        from improve import RepoImprover, OpenRouterProvider
         
         # Test with AI that will fail (no aiohttp)
         improver = RepoImprover(ai_provider=OpenRouterProvider(api_key="test-key"))

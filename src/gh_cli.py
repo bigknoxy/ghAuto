@@ -119,7 +119,7 @@ def get_gh_cli_token_with_scope() -> dict:
         return {"token": None, "scopes": [], "host": "github.com"}
     
     try:
-        result = subprocess.run(
+        subprocess.run(
             ["gh", "api", "user", "-q", ".login"],
             capture_output=True,
             text=True,

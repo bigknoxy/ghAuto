@@ -1,5 +1,4 @@
 """Repository analyzer module."""
-import json
 import re
 from typing import Any
 
@@ -17,7 +16,6 @@ class RepositoryAnalyzer:
         """Analyze a repository and return analysis and findings."""
         owner = repo["owner"]["login"]
         name = repo["name"]
-        full_name = repo["full_name"]
 
         findings = []
         analysis = Analysis(
@@ -169,13 +167,6 @@ class RepositoryAnalyzer:
 
     async def _check_ci_cd(self, owner: str, repo: str) -> dict[str, Any]:
         """Check for CI/CD configuration files."""
-        ci_indicators = [
-            ".github/workflows",
-            ".travis.yml",
-            ".circleci/config.yml",
-            "azure-pipelines.yml",
-            "Jenkinsfile",
-        ]
         test_indicators = ["pytest", "jest", "mocha", "junit", "test", "spec"]
 
         has_ci = False
@@ -186,7 +177,7 @@ class RepositoryAnalyzer:
             paths = ["/" + f["name"] for f in contents]
 
             # Check for .github/workflows
-            if ".github" in paths:
+            if "/.github" in paths:
                 try:
                     workflow_contents = await self.client.get_repository_contents(owner, repo, ".github/workflows")
                     if workflow_contents and len(workflow_contents) > 0:
@@ -195,12 +186,12 @@ class RepositoryAnalyzer:
                     pass
 
             # Check for other CI files
-            for ci_file in [".travis.yml", "azure-pipelines.yml", "Jenkinsfile"]:
+            for ci_file in ["/travis.yml", "/azure-pipelines.yml", "/Jenkinsfile"]:
                 if ci_file in paths:
                     has_ci = True
 
             # Check for CircleCI
-            if ".circleci" in paths:
+            if "/.circleci" in paths:
                 has_ci = True
 
             # Check for test files
@@ -375,7 +366,6 @@ class RepositoryAnalyzer:
                 })
 
         # Check for duplicate functionality
-        repo_names = [r.name.lower() for r in repositories]
         duplicate_patterns = [
             (r"api.*", "API duplicate pattern detected"),
             (r"cli.*", "CLI duplicate pattern detected"),

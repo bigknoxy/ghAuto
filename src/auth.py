@@ -1,12 +1,15 @@
 """Authentication module for ghAuto."""
 import os
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import TYPE_CHECKING
 
 import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer
+
+if TYPE_CHECKING:
+    from github_client import GitHubClient
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

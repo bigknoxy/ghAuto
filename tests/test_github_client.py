@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, 'src')
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Patch gh_cli functions BEFORE importing GitHubClient
 with patch('gh_cli.check_gh_cli_auth', return_value=False):

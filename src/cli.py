@@ -3,7 +3,6 @@ import asyncio
 import os
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
@@ -13,7 +12,6 @@ from rich.panel import Panel
 
 from db import get_session, init_db
 from scheduler import AnalysisScheduler
-from github_client import GitHubClient
 from gh_cli import (
     get_gh_cli_token,
     check_gh_cli_auth,
@@ -187,7 +185,7 @@ def analyze(
     repo_count = session.query(Repository).count()
     finding_count = session.query(Finding).count()
     
-    console.print(f"\n[green]✓[/green] Analysis complete!")
+    console.print("\n[green]✓[/green] Analysis complete!")
     console.print(f"  Repositories analyzed: {repo_count}")
     console.print(f"  Findings: {finding_count}")
 
@@ -247,8 +245,6 @@ def serve(
 ):
     """Start the dashboard and API server."""
     import subprocess
-    import threading
-    import time
     import socket
     
     def find_available_port(start_port: int, max_attempts: int = 100) -> int:
@@ -356,7 +352,7 @@ def serve(
                     if result.returncode != 0:
                         console.print(f"[yellow]Warning:[/yellow] Dashboard dependency install failed: {result.stderr.decode() if result.stderr else 'unknown error'}")
                     else:
-                        console.print(f"[green]✓[/green] Dashboard dependencies installed")
+                        console.print("[green]✓[/green] Dashboard dependencies installed")
                 
                 console.print(f"[green]✓[/green] Starting dashboard on port {dashboard_actual_port}")
                 console.print(f"[blue]Dashboard URL:[/blue] http://localhost:{dashboard_actual_port}")
@@ -431,7 +427,7 @@ def doctor():
         repo_count = session.query(Repository).count()
         finding_count = session.query(Finding).count()
         
-        console.print(f"\n[bold]Statistics:[/bold]")
+        console.print("\n[bold]Statistics:[/bold]")
         console.print(f"  Repositories tracked: {repo_count}")
         console.print(f"  Findings recorded: {finding_count}")
     
@@ -610,7 +606,6 @@ def update(
                 has_npm = subprocess.run(["npm", "--version"], capture_output=True).returncode == 0
                 
                 if has_bun:
-                    pm = "bun"
                     has_lock = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
                     has_nm = (dashboard_path / "node_modules").exists()
                     
@@ -623,7 +618,6 @@ def update(
                         subprocess.run(["bun", "install"], cwd=dashboard_path, capture_output=True)
                         
                 elif has_npm:
-                    pm = "npm"
                     needs_nm = not (dashboard_path / "node_modules").exists()
                     
                     if needs_nm:

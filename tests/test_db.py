@@ -18,8 +18,7 @@ from db import (
     ScheduledRun,
     Config,
     get_session,
-    init_db,
-    Base
+    init_db
 )
 
 
@@ -365,7 +364,7 @@ class TestDatabasePathDefaults:
     def test_database_path_consistency_across_functions(self):
         """Test that get_session and init_db use the same default path."""
         # Get expected default path
-        expected_path = str(Path.home() / ".ghauto" / "data" / "ghauto.db")
+        str(Path.home() / ".ghauto" / "data" / "ghauto.db")
         
         # Test init_db returns engine pointing to correct path
         # (We can't easily verify the path in the engine without introspection)
