@@ -186,7 +186,7 @@ class RepositoryAnalyzer:
             paths = ["/" + f["name"] for f in contents]
 
             # Check for .github/workflows
-            if ".github" in paths:
+            if "/.github" in paths:
                 try:
                     workflow_contents = await self.client.get_repository_contents(owner, repo, ".github/workflows")
                     if workflow_contents and len(workflow_contents) > 0:
@@ -195,12 +195,12 @@ class RepositoryAnalyzer:
                     pass
 
             # Check for other CI files
-            for ci_file in [".travis.yml", "azure-pipelines.yml", "Jenkinsfile"]:
+            for ci_file in ["/travis.yml", "/azure-pipelines.yml", "/Jenkinsfile"]:
                 if ci_file in paths:
                     has_ci = True
 
             # Check for CircleCI
-            if ".circleci" in paths:
+            if "/.circleci" in paths:
                 has_ci = True
 
             # Check for test files
