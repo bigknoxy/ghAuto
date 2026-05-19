@@ -130,11 +130,14 @@ class TestImproveCommand:
         """Test that improve command handles --ai flag."""
         from cli import app
         from typer.testing import CliRunner
+        import re
         
         runner = CliRunner()
         # Test that --ai flag is accepted
         result = runner.invoke(app, ["improve", "--ai", "--help"])
         
         assert result.exit_code == 0
+        # Strip ANSI escape codes for reliable assertion
+        clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.output)
         # The help should show the --ai option
-        assert "--ai" in result.output
+        assert "--ai" in clean_output
