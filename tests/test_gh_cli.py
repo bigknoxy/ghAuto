@@ -2,7 +2,6 @@
 import sys
 sys.path.insert(0, 'src')
 
-import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 
@@ -55,11 +54,6 @@ class TestGetGhCliToken:
     
     def test_oauth_token(self):
         """Test extracting oauth_token from config."""
-        mock_config = """
-github.com:
-  user: testuser
-  oauth_token: gho_testtoken123
-"""
         mock_path = MagicMock()
         mock_path.exists.return_value = True
         

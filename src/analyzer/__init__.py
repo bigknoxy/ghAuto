@@ -1,5 +1,4 @@
 """Repository analyzer module."""
-import json
 import re
 from typing import Any
 
@@ -17,7 +16,6 @@ class RepositoryAnalyzer:
         """Analyze a repository and return analysis and findings."""
         owner = repo["owner"]["login"]
         name = repo["name"]
-        full_name = repo["full_name"]
 
         findings = []
         analysis = Analysis(
@@ -169,13 +167,6 @@ class RepositoryAnalyzer:
 
     async def _check_ci_cd(self, owner: str, repo: str) -> dict[str, Any]:
         """Check for CI/CD configuration files."""
-        ci_indicators = [
-            ".github/workflows",
-            ".travis.yml",
-            ".circleci/config.yml",
-            "azure-pipelines.yml",
-            "Jenkinsfile",
-        ]
         test_indicators = ["pytest", "jest", "mocha", "junit", "test", "spec"]
 
         has_ci = False
@@ -375,7 +366,6 @@ class RepositoryAnalyzer:
                 })
 
         # Check for duplicate functionality
-        repo_names = [r.name.lower() for r in repositories]
         duplicate_patterns = [
             (r"api.*", "API duplicate pattern detected"),
             (r"cli.*", "CLI duplicate pattern detected"),

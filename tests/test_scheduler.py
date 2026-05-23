@@ -5,7 +5,6 @@ sys.path.insert(0, 'src')
 import pytest
 import tempfile
 import os
-from datetime import datetime
 from unittest.mock import patch, MagicMock, AsyncMock
 
 from db import Repository, Analysis, Finding, ScheduledRun, get_session, init_db

@@ -1,6 +1,5 @@
 """Tests for the improve command."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, MagicMock
 
 
 class TestImproveCommand:
@@ -117,7 +116,7 @@ class TestImproveCommand:
     @pytest.mark.asyncio
     async def test_improve_repo_falls_back_on_ai_error(self):
         """Test that improve_repo falls back to heuristic when AI fails."""
-        from improve import RepoImprover, HeuristicProvider, OpenRouterProvider
+        from improve import RepoImprover, OpenRouterProvider
         
         # Test with AI that will fail (no aiohttp)
         improver = RepoImprover(ai_provider=OpenRouterProvider(api_key="test-key"))
@@ -131,11 +130,14 @@ class TestImproveCommand:
         """Test that improve command handles --ai flag."""
         from cli import app
         from typer.testing import CliRunner
+        import re
         
         runner = CliRunner()
         # Test that --ai flag is accepted
         result = runner.invoke(app, ["improve", "--ai", "--help"])
         
         assert result.exit_code == 0
+        # Strip ANSI escape codes for reliable assertion
+        clean_output = re.sub(r'\x1b\[[0-9;]*m', '', result.output)
         # The help should show the --ai option
-        assert "--ai" in result.output
+        assert "--ai" in clean_output

@@ -2,12 +2,9 @@
 import sys
 sys.path.insert(0, 'src')
 
-import pytest
 import tempfile
-import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-from datetime import datetime
 
 from typer.testing import CliRunner
 from cli import app
@@ -209,16 +206,15 @@ class TestBunSupport:
             (dashboard_path / "node_modules").mkdir()
             
             # Verify detection logic
-            package_manager = "bun"
             bun_lock_exists = (dashboard_path / "bun.lockb").exists() or (dashboard_path / "bun.lock").exists()
             npm_node_modules_exists = (dashboard_path / "node_modules").exists()
             
             # For bun: needs install because no bun.lock exists
             needs_install = not bun_lock_exists
-            assert needs_install == True, "Bun should trigger reinstall when no bun.lock exists"
+            assert needs_install, "Bun should trigger reinstall when no bun.lock exists"
             
             # For npm: would not need install because node_modules exists
-            assert npm_node_modules_exists == True, "npm would have node_modules"
+            assert npm_node_modules_exists, "npm would have node_modules"
 
     def test_npm_doesnt_need_reinstall_when_node_modules_exists(self):
         """Test that npm doesn't trigger reinstall when node_modules exists."""
@@ -233,12 +229,11 @@ class TestBunSupport:
             (dashboard_path / "node_modules").mkdir()
             
             # For npm: check dependency logic
-            package_manager = "npm"
             has_node_modules = (dashboard_path / "node_modules").exists()
             
             # npm should NOT need install
             needs_install = not has_node_modules
-            assert needs_install == False, "npm should not need reinstall when node_modules exists"
+            assert not needs_install, "npm should not need reinstall when node_modules exists"
 
 
 class TestApiPortProxy:

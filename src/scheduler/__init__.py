@@ -8,7 +8,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from analyzer import RepositoryAnalyzer
 from github_client import GitHubClient
-from db import Finding, Opportunity, Repository, ScheduledRun, get_session, parse_github_datetime
+from db import Opportunity, Repository, ScheduledRun, get_session, parse_github_datetime
 
 logger = logging.getLogger(__name__)
 

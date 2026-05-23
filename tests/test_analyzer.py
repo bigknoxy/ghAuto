@@ -167,13 +167,6 @@ async def test_analyze_repository_includes_documentation_findings(analyzer, mock
 @pytest.mark.asyncio
 async def test_analyze_repository_with_all_features_present(analyzer, mock_client):
     """Test that analyze_repository works correctly when all features are present."""
-    repo = {
-        "id": 456,
-        "name": "complete-repo",
-        "full_name": "owner/complete-repo",
-        "owner": {"login": "owner"},
-    }
-    
     # Simplified test - just verify documentation checks work
     mock_client.get_repository_contents.return_value = [
         {"name": "LICENSE", "type": "file"},
