@@ -20,7 +20,7 @@ dependencies = [
     "rich>=13.0.0",
     "python-dotenv>=1.0.0",
     "pyjwt>=2.8.0",
-    "passlib>=1.7.0",
+    "passlib>=1.7.4",
     "cryptography>=42.0.0",
 ]
 
