@@ -9,7 +9,7 @@ description = "GitHub Repository Management and Analysis Tool"
 requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.24.0",
-    "aiohttp>=3.9.0",
+    "aiohttp>=3.14.3",
     "pydantic>=2.0.0",
     "apscheduler>=3.10.0",
     "fastapi>=0.100.0",
