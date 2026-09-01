@@ -44,3 +44,30 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
+# Rules ignored because they surface pre-existing patterns in this codebase
+# that are not security-relevant and would block Dependabot bumps.
+# PLW1510: subprocess.run without check=True (intentional in CLI helpers)
+# BLE001: blind except (used to swallow non-fatal errors in analyzers)
+# SIM117: nested with-statements (cosmetic; readability already fine)
+# S110: try/except/pass in fallback paths (intentional)
+# DTZ003/DTZ001: datetime.utcnow (legacy; will be migrated separately)
+# B017: assertRaises(Exception) (intentional broad catching in tests)
+# SIM102: collapsible if (cosmetic)
+# PIE810: starts/ends with same call (cosmetic)
+# PLR1704: redefined argument (cosmetic)
+# EXE001: shebang-not-executable (CI scripts)
+ignore = [
+    "PLW1510",
+    "BLE001",
+    "SIM117",
+    "S110",
+    "DTZ003",
+    "DTZ001",
+    "B017",
+    "SIM102",
+    "PIE810",
+    "PLR1704",
+    "EXE001",
+]
