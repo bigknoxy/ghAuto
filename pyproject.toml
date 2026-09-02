@@ -72,4 +72,7 @@ ignore = [
     "EXE001",
     # Auto-fixable style noise that surfaces on Dependabot bumps
     "I001",
+    # UP045/UP024 are pyupgrade rules — Optional[X] vs X|None and aliased errors
+    "UP045",
+    "UP024",
 ]
