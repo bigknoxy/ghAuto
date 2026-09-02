@@ -70,4 +70,6 @@ ignore = [
     "PIE810",
     "PLR1704",
     "EXE001",
+    # Auto-fixable style noise that surfaces on Dependabot bumps
+    "I001",
 ]
