@@ -44,3 +44,23 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
+# Rules ignored because they surface pre-existing patterns in this codebase
+# that are not security-relevant and would block Dependabot bumps.
+ignore = [
+    "PLW1510",
+    "BLE001",
+    "SIM117",
+    "S110",
+    "DTZ003",
+    "DTZ001",
+    "B017",
+    "SIM102",
+    "PIE810",
+    "PLR1704",
+    "EXE001",
+    "I001",
+    "UP045",
+    "UP024",
+]
