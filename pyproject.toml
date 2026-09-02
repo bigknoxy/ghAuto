@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=84.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,28 +8,28 @@ version = "0.2.30"
 description = "GitHub Repository Management and Analysis Tool"
 requires-python = ">=3.10"
 dependencies = [
-    "httpx>=0.24.0",
-    "aiohttp>=3.9.0",
-    "pydantic>=2.0.0",
-    "apscheduler>=3.10.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.48.0",
-    "sqlalchemy>=2.0.0",
-    "pyyaml>=6.0",
-    "typer>=0.26.1",
-    "rich>=13.0.0",
-    "python-dotenv>=1.0.0",
+    "httpx>=0.28.1",
+    "aiohttp>=3.14.3",
+    "pydantic>=2.13.5",
+    "apscheduler>=3.11.3",
+    "fastapi>=0.141.1",
+    "uvicorn>=0.52.4",
+    "sqlalchemy>=2.0.52",
+    "pyyaml>=6.0.3",
+    "typer>=0.27.2",
+    "rich>=15.0.0",
+    "python-dotenv>=1.2.3",
     "pyjwt>=2.13.0",
-    "passlib>=1.7.0",
-    "cryptography>=42.0.0",
+    "passlib>=1.7.4",
+    "cryptography>=50.0.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
+    "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "ruff>=0.0.280",
-    "mypy>=1.5.0",
+    "ruff>=0.16.5",
+    "mypy>=2.3.1",
 ]
 
 [project.scripts]
